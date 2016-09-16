@@ -38,7 +38,6 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($silencer->isResultFalse());
         var_dump($silencer->getError());
         $this->assertFalse($silencer->hasError());
-        $this->assertFalse($silencer->getError());
         $this->assertFalse($silencer->getError(CallSilencer::ERROR_MESSAGE));
         $this->assertFalse($silencer->getError('invalid-index'));
     }
@@ -79,7 +78,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($silencer->isResultFalse());
         $this->assertTrue($silencer->hasError());
         $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $silencer->getError(CallSilencer::ERROR_MESSAGE));
-        $this->assertArrayHasKey('line', $silencer->getError());
+        $this->assertArrayHasKey('line', $silencer->getError(CallSilencer::ERROR_ARRAY));
         $this->assertFalse($silencer->getError('invalid-index'));
     }
 
@@ -96,7 +95,6 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($silencer->isResultFalse());
         $this->assertTrue($silencer->hasError());
         $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $silencer->getError(CallSilencer::ERROR_MESSAGE));
-        $this->assertArrayHasKey('line', $silencer->getError());
         $this->assertFalse($silencer->getError('invalid-index'));
     }
 

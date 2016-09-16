@@ -117,7 +117,7 @@ class CallSilencer implements CallSilencerInterface
         } catch (\Exception $e) {
             throw new InvocationException('Exception thrown while silently invoking closure.', $e);
         } finally {
-            $this->raisedError = $this->getLastError();
+            $this->raisedError = error_get_last();
 
             if ($restore) {
                 Silencer::restore();
@@ -190,7 +190,7 @@ class CallSilencer implements CallSilencerInterface
      */
     public function hasError()
     {
-        return $this->raisedError !== null;
+        return isset($this->raisedError['message']) && !empty($this->raisedError['message']);
     }
 
     /**
@@ -200,31 +200,17 @@ class CallSilencer implements CallSilencerInterface
      *
      * @return string[]|string|bool
      */
-    public function getError($index = self::ERROR_ARRAY)
+    public function getError($index = self::ERROR_MESSAGE)
     {
-        if (!$this->raisedError) {
-            return false;
-        }
-
         if ($index === self::ERROR_ARRAY) {
-            return $this->raisedError;
+            return $this->raisedError === null ? false : $this->raisedError;
         }
 
-        if (!isset($this->raisedError[$index])) {
+        if (!isset($this->raisedError[$index]) || empty($this->raisedError[$index])) {
             return false;
         }
 
         return $this->raisedError[$index];
-    }
-
-    /**
-     * @return array|null
-     */
-    private function getLastError()
-    {
-        $error = error_get_last();
-
-        return isset($error['file']) && strpos($error['file'], 'polyfill-php70/Php70.php') ? null : $error;
     }
 }
 
