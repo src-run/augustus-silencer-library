@@ -15,7 +15,6 @@ use SR\Silencer\CallSilencer;
 use SR\Silencer\Exception\InvocationException;
 use SR\Silencer\Exception\ResultValidatorException;
 use SR\Silencer\Silencer;
-use SR\Silencer\SilencerInterface;
 
 /**
  * @covers \SR\Silencer\CallSilencer
