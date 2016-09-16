@@ -37,6 +37,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($silencer->getResult());
         $this->assertTrue($silencer->isResultTrue());
         $this->assertFalse($silencer->isResultFalse());
+        var_dump($silencer->getError());
         $this->assertFalse($silencer->hasError());
         $this->assertFalse($silencer->getError());
         $this->assertFalse($silencer->getError(CallSilencer::ERROR_MESSAGE));

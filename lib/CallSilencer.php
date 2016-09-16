@@ -117,7 +117,7 @@ class CallSilencer implements CallSilencerInterface
         } catch (\Exception $e) {
             throw new InvocationException('Exception thrown while silently invoking closure.', $e);
         } finally {
-            $this->raisedError = error_get_last();
+            $this->raisedError = $this->getLastError();
 
             if ($restore) {
                 Silencer::restore();
@@ -215,6 +215,16 @@ class CallSilencer implements CallSilencerInterface
         }
 
         return $this->raisedError[$index];
+    }
+
+    /**
+     * @return array|null
+     */
+    private function getLastError()
+    {
+        $error = error_get_last();
+
+        return isset($error['file']) && strpos($error['file'], 'polyfill-php70/Php70.php') ? null : $error;
     }
 }
 
