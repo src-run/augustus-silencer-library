@@ -217,17 +217,6 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(Silencer::isSilenced());
         $this->assertFalse(Silencer::hasPriorReportingLevels());
     }
-
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|SilencerInterface
-     */
-    private function getSilencerMock()
-    {
-        return $this
-            ->getMockBuilder(Silencer::class)
-            ->setMethods(['isSilenced', 'silence'])
-            ->getMock();
-    }
 }
 
 /* EOF */
