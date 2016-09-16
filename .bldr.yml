@@ -12,5 +12,5 @@ app_prep   : dep-composer
 app_post   : ~
 app_path   : ~
 pkg_name   : augustus-silencer-library
-pkg_desc   : "a simple library to execute a function or method in an error-silenced vacume"
+pkg_desc   : "a simple library to silence php-raised errors and execute a closure in an error-silenced environment"
 pkg_bndl   : false

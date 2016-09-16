@@ -3,7 +3,7 @@
   "license": "MIT",
   "type": "library",
   "homepage": "https://src.run/augustus-silencer-library/home",
-  "description": "A simple abstraction library to enable compilation of files to native php.",
+  "description": "A simple library to silence php-raised errors and execute a closure in an error-silenced environment.",
   "support": {
     "email": "rmf@src.run",
     "source": "https://src.run/augustus-silencer-library/git",

@@ -10,7 +10,7 @@
 
 [Welcome](https://src.run/go/readme_welcome)! The `src-run/augustus-silencer-library` package provides
 
-> A simple library to execute a function or method in an error-silenced vacume.
+> A simple library to silence php-raised errors and execute a closure in an error-silenced environment.
 
 ### Grouping
 
