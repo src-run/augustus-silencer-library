@@ -17,48 +17,23 @@ namespace SR\Silencer;
 interface CallSilencerInterface
 {
     /**
-     * Optional constant parameter for {@see getError()} to get error as original array.
-     */
-    const ERROR_ARRAY = 'array';
-
-    /**
-     * Optional constant parameter for {@see getError()} to get error message.
-     */
-    const ERROR_MESSAGE = 'message';
-
-    /**
-     * Optional constant parameter for {@see getError()} to get error type.
-     */
-    const ERROR_TYPE = 'type';
-
-    /**
-     * Optional constant parameter for {@see getError()} to get error file.
-     */
-    const ERROR_FILE = 'file';
-
-    /**
-     * Optional constant parameter for {@see getError()} to get error line.
-     */
-    const ERROR_LINE = 'line';
-
-    /**
      * Static method to create class instance with optional closure and validator parameters.
      *
      * @param \Closure|null $closure   A closure to call in silenced environment
      * @param \Closure|null $validator A closure to call during return value validation
      *
-     * @return static
+     * @return static|CallSilencerInterface
      */
-    public static function create(\Closure $closure = null, \Closure $validator = null);
+    public static function create(\Closure $closure = null, \Closure $validator = null) : CallSilencerInterface;
 
     /**
      * Sets the closure to invoke.
      *
-     * @param \Closure $invokable A closure to call in silenced environment
+     * @param \Closure $closure A closure to call in silenced environment
      *
-     * @return $this
+     * @return CallSilencerInterface
      */
-    public function setClosure(\Closure $invokable);
+    public function setClosure(\Closure $closure) : CallSilencerInterface;
 
     /**
      * Sets the closure used to test validity of return value. When called, this closure is provided the return value
@@ -66,25 +41,28 @@ interface CallSilencerInterface
      *
      * @param \Closure $validator A closure to call during return value validation using {@see isReturnValid()}
      *
-     * @return $this
+     * @return CallSilencerInterface
      */
-    public function setValidator(\Closure $validator);
+    public function setValidator(\Closure $validator) : CallSilencerInterface;
 
     /**
-     * Invoke closure in silenced environment.
+     * Invoke the closure within a silenced environment.
      *
-     * @param bool $restore Calls {@see Silencer::restore()} to restore error level after calling closure if true
+     * @param bool $restore Restores prior error level after silencing and invoking closire. If false, the silenced
+     *                      error level will remain indefinably.
      *
-     * @return $this
+     * @throws \Exception If an exception is thrown within the \Closure instance.
+     *
+     * @return CallSilencerInterface
      */
-    public function invoke($restore = true);
+    public function invoke($restore = true) : CallSilencerInterface;
 
     /**
      * Returns true if a non-null value was returned from invoked closure.
      *
      * @return bool
      */
-    public function hasResult();
+    public function hasResult() : bool;
 
     /**
      * Get the return value invoked closure.
@@ -98,37 +76,42 @@ interface CallSilencerInterface
      *
      * @return bool
      */
-    public function isResultValid();
+    public function isResultValid() : bool;
 
     /**
      * Returns true if the invoked closure return value is true (strict check).
      *
      * @return bool
      */
-    public function isResultTrue();
+    public function isResultTrue() : bool;
 
     /**
      * Returns true if the invoked closure return value is false (strict check).
      *
      * @return bool
      */
-    public function isResultFalse();
+    public function isResultFalse() : bool;
 
     /**
      * Return true if an error was raised by invoking closure.
      *
      * @return bool
      */
-    public function hasError();
+    public function hasError() : bool;
 
     /**
-     * Returns the error raised by invoking closure.
+     * Return the error message caused by a call in the invoked closure.
      *
-     * @param string|null $index The index string to get from last error array, or return original error array
-     *
-     * @return string[]|string
+     * @return string
      */
-    public function getError($index = self::ERROR_MESSAGE);
+    public function getErrorMessage() : string;
+
+    /**
+     * Return the error type integer caused by a call in the invoked closure.
+     *
+     * @return int
+     */
+    public function getErrorType() : int;
 }
 
 /* EOF */

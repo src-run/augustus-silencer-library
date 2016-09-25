@@ -11,71 +11,73 @@
 
 namespace SR\Silencer;
 
-use SR\Silencer\Exception\RestoreException;
-
 /**
  * Implementation for entering and exiting silenced error environment.
- *
- * This is based heavily on Composer's Silencer utility class, which can be found at
- * https://github.com/composer/composer/blob/master/src/Composer/Util/Silencer.php
  */
 class Silencer implements SilencerInterface
 {
     /**
+     * An array of error reporting levels. Multiple calls to {@see Silencer::silence()} will shift new error reporting
+     * levels onto the beginning of this array. Subsequent calls to {@see Silencer::restore()} will unshift these saved
+     * error reporting levels and re-apply them.
+     *
      * @var int[]
      */
-    private static $priorLevelStack = [];
+    private static $reportingLevelHistory = [];
 
     /**
-     * Enter silenced state.
+     * Enter new silenced error reporting level with optionally custom level mask.
      *
      * @param int $mask The new error mask to apply
      *
      * @return int
      */
-    public static function silence($mask = self::DEFAULT_MASK)
+    public static function silence(int $mask = null) : int
     {
-        $priorLevel = error_reporting();
+        static::unShiftLevelHistory(static::getErrorReporting());
 
-        array_push(static::$priorLevelStack, $priorLevel);
-        error_reporting($priorLevel & ~$mask);
-
-        return $priorLevel;
+        return static::setErrorReporting(
+            static::getSilencedMask(static::priorLevelHistory(), $mask)
+        );
     }
 
     /**
-     * Exit silenced state.
-     *
-     * @throws RestoreException If {@see silence()} is not called prior
+     * Restore previous error reporting level assigned through call to {@see Silencer::silence}.
      *
      * @return int
      */
-    public static function restore()
+    public static function restore() : int
     {
-        if (!static::hasPriorReportingLevels()) {
-            throw new RestoreException('Cannot restore to an unknown prior error state.');
+        if (!static::hasLevelHistory()) {
+            return static::getErrorReporting();
         }
 
-        $restoreLevel = array_pop(static::$priorLevelStack);
-        error_reporting($restoreLevel);
-
-        return $restoreLevel;
+        return static::setErrorReporting(static::shiftLevelHistory());
     }
 
     /**
-     * Returns true if silenced to default mask.
+     * Returns true if if current error reporting level equals the default silenced level.
      *
-     * @return bool|int
+     * @return bool
      */
-    public static function isSilenced()
+    public static function isSilenced() : bool
     {
-        if (!static::hasPriorReportingLevels()) {
+        if (!static::hasLevelHistory()) {
             return false;
         }
 
-        $priorLevel = static::$priorLevelStack[count(static::$priorLevelStack) - 1];
+        return static::getSilencedMask(static::priorLevelHistory()) ===
+               static::getSilencedMask(static::getErrorReporting());
+    }
 
-        return (bool) ($priorLevel & ~self::DEFAULT_MASK === error_reporting() & ~self::DEFAULT_MASK);
+    /**
+     * Returns true if state is "restorable" (meaning a prior restore state exists).
+     *
+     * @return bool
+     */
+    public static function isRestorable() : bool
+    {
+        return static::hasLevelHistory();
     }
 
     /**
@@ -83,9 +85,68 @@ class Silencer implements SilencerInterface
      *
      * @return bool
      */
-    public static function hasPriorReportingLevels()
+    private static function hasLevelHistory() : bool
     {
-        return count(static::$priorLevelStack) > 0;
+        return (bool) count(static::$reportingLevelHistory) > 0;
+    }
+
+    /**
+     * @param int $level
+     *
+     * @return int
+     */
+    private static function unShiftLevelHistory(int $level) : int
+    {
+        array_unshift(static::$reportingLevelHistory, $level);
+
+        return $level;
+    }
+
+    /**
+     * @return int
+     */
+    private static function shiftLevelHistory() : int
+    {
+        return array_shift(static::$reportingLevelHistory);
+    }
+
+    /**
+     * @return int
+     */
+    private static function priorLevelHistory()
+    {
+        return static::hasLevelHistory() ? static::$reportingLevelHistory[0] : static::getErrorReporting();
+    }
+
+    /**
+     * @param int|null $level
+     *
+     * @return int
+     */
+    private static function setErrorReporting(int $level) : int
+    {
+        error_reporting($level);
+
+        return static::getErrorReporting();
+    }
+
+    /**
+     * @return int
+     */
+    private static function getErrorReporting() : int
+    {
+        return error_reporting();
+    }
+
+    /**
+     * @param int      $mask
+     * @param int|null $subtract
+     *
+     * @return int
+     */
+    private static function getSilencedMask(int $mask, int $subtract = null) : int
+    {
+        return $mask & ~($subtract ?: self::NEGATIVE_SILENCE_MASK);
     }
 }
 

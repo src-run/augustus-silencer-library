@@ -11,33 +11,62 @@
 
 namespace SR\Silencer;
 
-use SR\Silencer\Exception\InvocationException;
-use SR\Silencer\Exception\ResultValidatorException;
-
 /**
  * Implementation for calling closure in error-silenced environment.
  */
 class CallSilencer implements CallSilencerInterface
 {
     /**
+     * The closure instance to invoke.
+     *
      * @var \Closure
      */
     private $closure;
 
     /**
+     * Optional validation closure that is invoked to check result validity.
+     *
      * @var \Closure|null
      */
     private $validator;
 
     /**
+     * Returning value of invoked closure.
+     *
      * @var mixed
      */
-    private $return;
+    private $result;
 
     /**
+     * Raised error if an error was raised during invoking closure.
+     *
      * @var string[]|null
      */
     private $raisedError;
+
+    /**
+     * True if closure has been invoked.
+     *
+     * @var bool
+     */
+    private $invoked;
+
+    /**
+     * Static method to create class instance with optional closure and validator parameters.
+     *
+     * @param \Closure|null $closure   A closure to call in silenced environment
+     * @param \Closure|null $validator A closure to call during return value validation
+     */
+    public function __construct(\Closure $closure = null, \Closure $validator = null)
+    {
+        if ($closure) {
+            $this->setClosure($closure);
+        }
+
+        if ($validator) {
+            $this->setValidator($validator);
+        }
+    }
 
     /**
      * Static method to create class instance with optional closure and validator parameters.
@@ -45,21 +74,11 @@ class CallSilencer implements CallSilencerInterface
      * @param \Closure|null $closure   A closure to call in silenced environment
      * @param \Closure|null $validator A closure to call during return value validation
      *
-     * @return static
+     * @return static|CallSilencerInterface
      */
-    public static function create(\Closure $closure = null, \Closure $validator = null)
+    public static function create(\Closure $closure = null, \Closure $validator = null) : CallSilencerInterface
     {
-        $instance = new static();
-
-        if ($closure) {
-            $instance->setClosure($closure);
-        }
-
-        if ($validator) {
-            $instance->setValidator($validator);
-        }
-
-        return $instance;
+        return new static($closure, $validator);
     }
 
     /**
@@ -67,9 +86,9 @@ class CallSilencer implements CallSilencerInterface
      *
      * @param \Closure $closure A closure to call in silenced environment
      *
-     * @return $this
+     * @return CallSilencerInterface
      */
-    public function setClosure(\Closure $closure)
+    public function setClosure(\Closure $closure) : CallSilencerInterface
     {
         $this->closure = $closure;
 
@@ -82,9 +101,9 @@ class CallSilencer implements CallSilencerInterface
      *
      * @param \Closure $validator A closure to call during return value validation using {@see isReturnValid()}
      *
-     * @return $this
+     * @return CallSilencerInterface
      */
-    public function setValidator(\Closure $validator)
+    public function setValidator(\Closure $validator) : CallSilencerInterface
     {
         $this->validator = $validator;
 
@@ -92,18 +111,19 @@ class CallSilencer implements CallSilencerInterface
     }
 
     /**
-     * Invoke closure in silenced environment.
+     * Invoke the closure within a silenced environment.
      *
-     * @param bool $restore Calls {@see Silencer::restore()} to restore error level after calling closure if true
+     * @param bool $restore Restores prior error level after silencing and invoking closire. If false, the silenced
+     *                      error level will remain indefinably.
      *
-     * @throws InvocationException If closure throws exception
+     * @throws \Exception If an exception is thrown within the \Closure instance.
      *
-     * @return $this
+     * @return CallSilencerInterface
      */
-    public function invoke($restore = true)
+    public function invoke($restore = true) : CallSilencerInterface
     {
-        if (null === $invokable = $this->closure) {
-            throw new InvocationException('Cannot call undefined. Set closure before calling invoke.');
+        if (null === $this->closure) {
+            return $this;
         }
 
         if (!Silencer::isSilenced()) {
@@ -113,11 +133,12 @@ class CallSilencer implements CallSilencerInterface
         error_clear_last();
 
         try {
-            $this->return = $invokable();
+            $this->result = ($this->closure)();
         } catch (\Exception $e) {
-            throw new InvocationException('Exception thrown while silently invoking closure.', $e);
+            throw $e;
         } finally {
             $this->raisedError = error_get_last();
+            $this->invoked = true;
 
             if ($restore) {
                 Silencer::restore();
@@ -128,13 +149,23 @@ class CallSilencer implements CallSilencerInterface
     }
 
     /**
+     * Returns true if the closure was called.
+     *
+     * @return bool
+     */
+    public function isInvoked() : bool
+    {
+        return $this->invoked === true;
+    }
+
+    /**
      * Returns true if a non-null value was returned from invoked closure.
      *
      * @return bool
      */
-    public function hasResult()
+    public function hasResult() : bool
     {
-        return $this->return !== null;
+        return $this->result !== null;
     }
 
     /**
@@ -144,23 +175,21 @@ class CallSilencer implements CallSilencerInterface
      */
     public function getResult()
     {
-        return $this->return;
+        return $this->result;
     }
 
     /**
      * Returns type hinted value from validation closure.
      *
-     * @throws ResultValidatorException If no validator closure has been assigned
-     *
      * @return bool
      */
-    public function isResultValid()
+    public function isResultValid() : bool
     {
-        if (null === $closure = $this->validator) {
-            throw new ResultValidatorException('Unable to validate result if validator closure is unset.');
+        if (null === $this->validator) {
+            return !$this->hasError();
         }
 
-        return $closure($this->return, $this->raisedError);
+        return (bool) ($this->validator)($this->result, $this->raisedError);
     }
 
     /**
@@ -168,9 +197,9 @@ class CallSilencer implements CallSilencerInterface
      *
      * @return bool
      */
-    public function isResultTrue()
+    public function isResultTrue() : bool
     {
-        return $this->return === true;
+        return $this->result === true;
     }
 
     /**
@@ -178,9 +207,9 @@ class CallSilencer implements CallSilencerInterface
      *
      * @return bool
      */
-    public function isResultFalse()
+    public function isResultFalse() : bool
     {
-        return $this->return === false;
+        return $this->result === false;
     }
 
     /**
@@ -188,29 +217,39 @@ class CallSilencer implements CallSilencerInterface
      *
      * @return bool
      */
-    public function hasError()
+    public function hasError() : bool
     {
-        return isset($this->raisedError['message']) && !empty($this->raisedError['message']);
+        return null !== $this->raisedError && isset($this->raisedError['message']);
     }
 
     /**
-     * Returns the error raised by invoking closure.
+     * Return the error message caused by a call in the invoked closure.
      *
-     * @param string|null $index The index string to get from last error array, or return original error array
-     *
-     * @return string[]|string|bool
+     * @return string
      */
-    public function getError($index = self::ERROR_MESSAGE)
+    public function getErrorMessage() : string
     {
-        if ($index === self::ERROR_ARRAY) {
-            return $this->raisedError === null ? false : $this->raisedError;
-        }
+        return (string) $this->getErrorIndex('message') ?: '';
+    }
 
-        if (!isset($this->raisedError[$index]) || empty($this->raisedError[$index])) {
-            return false;
-        }
+    /**
+     * Return the error type integer caused by a call in the invoked closure.
+     *
+     * @return int
+     */
+    public function getErrorType() : int
+    {
+        return (string) $this->getErrorIndex('type') ?: 0;
+    }
 
-        return $this->raisedError[$index];
+    /**
+     * @param string $index
+     *
+     * @return string
+     */
+    private function getErrorIndex(string $index)
+    {
+        return isset($this->raisedError[$index]) ? $this->raisedError[$index] : null;
     }
 }
 

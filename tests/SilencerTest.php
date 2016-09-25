@@ -11,7 +11,6 @@
 
 namespace SR\Silencer\Tests;
 
-use SR\Silencer\Exception\RestoreException;
 use SR\Silencer\Silencer;
 
 /**
@@ -19,59 +18,57 @@ use SR\Silencer\Silencer;
  */
 class SilencerTest extends \PHPUnit_Framework_TestCase
 {
-    public function testThrowsExceptionOnRestoreBeforeSilence()
-    {
-        $this->expectException(RestoreException::class);
-        $this->expectExceptionMessage('Cannot restore to an unknown prior error state.');
-
-        Silencer::restore();
-    }
-
-    public function testDefaultSilenceAndRestore()
+    public function testSilenceAndRestore()
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::hasPriorReportingLevels());
+        $this->assertFalse(Silencer::isRestorable());
 
         $priorLevel = Silencer::silence();
 
         $rc = new \ReflectionClass(Silencer::class);
-        $rp = $rc->getProperty('priorLevelStack');
+        $rp = $rc->getProperty('reportingLevelHistory');
         $rp->setAccessible(true);
 
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::hasPriorReportingLevels());
+        $this->assertTrue(Silencer::isRestorable());
         $this->assertCount(1, $rp->getValue());
-        $this->assertSame(error_reporting(), $priorLevel & ~Silencer::DEFAULT_MASK);
+        $this->assertSame(error_reporting(), $priorLevel & ~Silencer::NEGATIVE_SILENCE_MASK);
 
         $restoredLevel = Silencer::restore();
-        $this->assertFalse(Silencer::hasPriorReportingLevels());
+        $this->assertFalse(Silencer::isRestorable());
         $this->assertFalse(Silencer::isSilenced());
         $this->assertSame(error_reporting(), $restoredLevel);
     }
 
-    /**
-     * @dataProvider silenceAndRestoreProvider
-     *
-     * @param int $mask
-     */
-    public function testSilenceAndRestore($mask)
+    public function testRestoreWhenNotRestorable()
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::hasPriorReportingLevels());
+        $this->assertFalse(Silencer::isRestorable());
+
+        $this->assertSame(error_reporting(), Silencer::restore());
+    }
+
+    /**
+     * @dataProvider silenceAndRestoreProvider
+     */
+    public function testSilenceAndRestoreWithDifferentErrorMasks($mask)
+    {
+        $this->assertFalse(Silencer::isSilenced());
+        $this->assertFalse(Silencer::isRestorable());
 
         $priorLevel = Silencer::silence($mask);
 
         $rc = new \ReflectionClass(Silencer::class);
-        $rp = $rc->getProperty('priorLevelStack');
+        $rp = $rc->getProperty('reportingLevelHistory');
         $rp->setAccessible(true);
 
-        $this->assertFalse(Silencer::isSilenced());
-        $this->assertTrue(Silencer::hasPriorReportingLevels());
+        $this->assertTrue(Silencer::isSilenced());
+        $this->assertTrue(Silencer::isRestorable());
         $this->assertCount(1, $rp->getValue());
         $this->assertSame(error_reporting(), $priorLevel & ~$mask);
 
         $restoredLevel = Silencer::restore();
-        $this->assertFalse(Silencer::hasPriorReportingLevels());
+        $this->assertFalse(Silencer::isRestorable());
         $this->assertFalse(Silencer::isSilenced());
         $this->assertSame(error_reporting(), $restoredLevel);
     }

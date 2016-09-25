@@ -19,37 +19,37 @@ interface SilencerInterface
     /**
      * The default silence mask to apply.
      */
-    const DEFAULT_MASK = E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED | E_STRICT;
+    const NEGATIVE_SILENCE_MASK = E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED | E_STRICT;
 
     /**
-     * Enter silenced state.
+     * Enter new silenced error reporting level with optionally custom level mask.
      *
-     * @param int $mask Error reporting level mask to apply
-     *
-     * @return int
-     */
-    public static function silence($mask = null);
-
-    /**
-     * Exit silenced state.
+     * @param int $mask The new error mask to apply
      *
      * @return int
      */
-    public static function restore();
+    public static function silence(int $mask = null) : int;
 
     /**
-     * Returns true if current state is silenced.
+     * Restore previous error reporting level assigned through call to {@see Silencer::silence}.
      *
-     * @return bool|int
+     * @return int
      */
-    public static function isSilenced();
+    public static function restore() : int;
 
     /**
-     * Returns true if prior restore state exists.
+     * Returns true if if current error reporting level equals the default silenced level.
      *
      * @return bool
      */
-    public static function hasPriorReportingLevels();
+    public static function isSilenced() : bool;
+
+    /**
+     * Returns true if state is "restorable" (meaning a prior restore state exists).
+     *
+     * @return bool
+     */
+    public static function isRestorable() : bool;
 }
 
 /* EOF */
