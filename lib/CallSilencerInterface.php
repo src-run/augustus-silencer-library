@@ -69,7 +69,7 @@ interface CallSilencerInterface
      *
      * @param mixed ...$parameters Any parameters to call to invoked closure
      *
-     * @throws \Exception If an exception is thrown within the \Closure instance.
+     * @throws \Exception If an exception is thrown within the \Closure instance
      *
      * @return CallSilencerInterface
      */

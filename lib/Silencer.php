@@ -44,7 +44,7 @@ final class Silencer implements SilencerInterface
     /**
      * Enter silenced error reporting level if not already in silenced state.
      *
-     * @param int|null $mask The new errir mask to apply.
+     * @param int|null $mask The new error mask to apply
      *
      * @return int
      */
