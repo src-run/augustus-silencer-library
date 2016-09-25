@@ -56,7 +56,7 @@ class SilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(Silencer::isSilenced());
         $this->assertFalse(Silencer::isRestorable());
 
-        $priorLevel = Silencer::silence($mask);
+        $priorLevel = Silencer::silenceIfNot($mask);
 
         $rc = new \ReflectionClass(Silencer::class);
         $rp = $rc->getProperty('reportingLevelHistory');

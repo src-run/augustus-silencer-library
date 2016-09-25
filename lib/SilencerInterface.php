@@ -12,7 +12,7 @@
 namespace SR\Silencer;
 
 /**
- * Interface for entering and exiting silenced error environment.
+ * Interface for engine error reporting silencing/restoring API.
  */
 interface SilencerInterface
 {
@@ -24,11 +24,20 @@ interface SilencerInterface
     /**
      * Enter new silenced error reporting level with optionally custom level mask.
      *
-     * @param int $mask The new error mask to apply
+     * @param int|null $mask The new error mask to apply
      *
      * @return int
      */
     public static function silence(int $mask = null) : int;
+
+    /**
+     * Enter silenced error reporting level if not already in silenced state.
+     *
+     * @param int|null $mask The new errir mask to apply.
+     *
+     * @return int
+     */
+    public static function silenceIfNot(int $mask = null) : int;
 
     /**
      * Restore previous error reporting level assigned through call to {@see Silencer::silence}.
