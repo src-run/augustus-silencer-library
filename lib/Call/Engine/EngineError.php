@@ -9,17 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Silencer\Util;
+namespace SR\Silencer\Call\Engine;
 
-/**
- * Simple engine error API.
- */
 final class EngineError
 {
     /**
      * Clears the last engine error.
      */
-    public static function clearLastError()
+    public static function clearLast()
     {
         return error_clear_last();
     }
@@ -29,7 +26,7 @@ final class EngineError
      *
      * @return bool
      */
-    public static function hasLastError() : bool
+    public static function hasLast() : bool
     {
         return static::isErrorValid(error_get_last());
     }
@@ -39,9 +36,9 @@ final class EngineError
      *
      * @return mixed[]|null
      */
-    public static function getLastError()
+    public static function getLast()
     {
-        return static::hasLastError() ? error_get_last() : null;
+        return static::hasLast() ? error_get_last() : null;
     }
 
     /**
@@ -60,5 +57,3 @@ final class EngineError
         return true;
     }
 }
-
-/* EOF */
