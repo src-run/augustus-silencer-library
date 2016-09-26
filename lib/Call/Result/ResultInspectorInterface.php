@@ -11,7 +11,7 @@
 
 namespace SR\Silencer\Call\Result;
 
-interface ResultInfoInterface
+interface ResultInspectorInterface
 {
     /**
      * @param \Closure|null $validator
@@ -23,18 +23,18 @@ interface ResultInfoInterface
      * @param \Closure $validator
      * @param object   $binding
      *
-     * @return ResultInfoInterface
+     * @return ResultInspectorInterface
      */
-    public function setValidator(\Closure $validator = null, $binding = null) : ResultInfoInterface;
+    public function setValidator(\Closure $validator = null, $binding = null) : ResultInspectorInterface;
 
     /**
      * @param mixed      $result
      * @param array|null $raised
      * @param bool       $called
      *
-     * @return ResultInfoInterface
+     * @return ResultInspectorInterface
      */
-    public function setResult($result, array $raised = null, $called = true) : ResultInfoInterface;
+    public function setResult($result, array $raised = null, $called = true) : ResultInspectorInterface;
 
     /**
      * @return bool

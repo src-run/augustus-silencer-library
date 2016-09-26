@@ -13,7 +13,7 @@ namespace SR\Silencer\Call\Result;
 
 use SR\Silencer\Call\Runner\ClosureRunner;
 
-final class ResultInfo implements ResultInfoInterface
+final class ResultInspector implements ResultInspectorInterface
 {
     /**
      * @var \Closure
@@ -53,9 +53,9 @@ final class ResultInfo implements ResultInfoInterface
      * @param \Closure $validator
      * @param object   $binding
      *
-     * @return ResultInfoInterface
+     * @return ResultInspectorInterface
      */
-    public function setValidator(\Closure $validator = null, $binding = null) : ResultInfoInterface
+    public function setValidator(\Closure $validator = null, $binding = null) : ResultInspectorInterface
     {
         $this->validator = $validator;
         $this->binding = $binding ?: $this->binding;
@@ -68,9 +68,9 @@ final class ResultInfo implements ResultInfoInterface
      * @param array|null $raised
      * @param bool       $called
      *
-     * @return ResultInfoInterface
+     * @return ResultInspectorInterface
      */
-    public function setResult($result, array $raised = null, $called = true) : ResultInfoInterface
+    public function setResult($result, array $raised = null, $called = true) : ResultInspectorInterface
     {
         $this->result = $result;
         $this->raised = $raised;

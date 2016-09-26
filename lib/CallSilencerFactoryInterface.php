@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Silencer\Call;
+namespace SR\Silencer;
 
-use SR\Silencer\Call\Context\CallDefinition;
+use SR\Silencer\Call\CallDefinition;
 
 interface CallSilencerFactoryInterface
 {

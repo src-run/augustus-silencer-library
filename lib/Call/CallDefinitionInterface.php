@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Silencer\Call\Context;
+namespace SR\Silencer\Call;
 
-use SR\Silencer\Call\Result\ResultInfoInterface;
+use SR\Silencer\Call\Result\ResultInspectorInterface;
 
 /**
  * Interface for calling closure in error-silenced context.
@@ -64,16 +64,16 @@ interface CallDefinitionInterface
      *
      * @throws \Exception If an exception is thrown within the \Closure instance
      *
-     * @return \SR\Silencer\Call\Result\ResultInfoInterface
+     * @return \SR\Silencer\Call\Result\ResultInspectorInterface
      */
-    public function invoke(...$parameters) : ResultInfoInterface;
+    public function invoke(...$parameters) : ResultInspectorInterface;
 
     /**
      * Get the return value invoked closure.
      *
-     * @return \SR\Silencer\Call\Result\ResultInfoInterface
+     * @return \SR\Silencer\Call\Result\ResultInspectorInterface
      */
-    public function getResult() : ResultInfoInterface;
+    public function getResult() : ResultInspectorInterface;
 }
 
 /* EOF */

@@ -12,8 +12,8 @@
 namespace SR\Silencer\Call\Runner;
 
 use Gitonomy\Git\Exception\RuntimeException;
+use SR\Silencer\Call\Engine\EngineError;
 use SR\Silencer\Silencer;
-use SR\Silencer\Util\PhpError;
 
 final class ClosureRunner implements ClosureRunnerInterface
 {
@@ -94,7 +94,7 @@ final class ClosureRunner implements ClosureRunnerInterface
      */
     public static function actionsPrior()
     {
-        PhpError::clearLastError();
+        EngineError::clearLast();
 
         if (!Silencer::isSilenced()) {
             Silencer::silence();
@@ -110,7 +110,7 @@ final class ClosureRunner implements ClosureRunnerInterface
             Silencer::restore();
         }
 
-        return PhpError::getLastError();
+        return EngineError::getLast();
     }
 }
 

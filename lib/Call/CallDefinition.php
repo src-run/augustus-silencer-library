@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Silencer\Call\Context;
+namespace SR\Silencer\Call;
 
-use SR\Silencer\Call\Result\ResultInfo;
-use SR\Silencer\Call\Result\ResultInfoInterface;
+use SR\Silencer\Call\Result\ResultInspector;
+use SR\Silencer\Call\Result\ResultInspectorInterface;
 use SR\Silencer\Call\Runner\ClosureRunner;
 
 /**
@@ -37,7 +37,7 @@ final class CallDefinition implements CallDefinitionInterface
     /**
      * Returning value of invoked closure.
      *
-     * @var ResultInfo
+     * @var ResultInspector
      */
     private $result;
 
@@ -95,7 +95,7 @@ final class CallDefinition implements CallDefinitionInterface
      */
     public function setValidator(\Closure $validator = null, $binding = null) : CallDefinitionInterface
     {
-        $this->result = new ResultInfo($validator, $binding ?: $binding);
+        $this->result = new ResultInspector($validator, $binding ?: $binding);
 
         return $this;
     }
@@ -107,9 +107,9 @@ final class CallDefinition implements CallDefinitionInterface
      *
      * @throws \Exception If an exception is thrown within the \Closure instance
      *
-     * @return ResultInfoInterface
+     * @return ResultInspectorInterface
      */
-    public function invoke(...$parameters) : ResultInfoInterface
+    public function invoke(...$parameters) : ResultInspectorInterface
     {
         if (!$this->closure) {
             return $this->result;
@@ -126,9 +126,9 @@ final class CallDefinition implements CallDefinitionInterface
     /**
      * Get the return value invoked closure.
      *
-     * @return \SR\Silencer\Call\Result\ResultInfoInterface
+     * @return \SR\Silencer\Call\Result\ResultInspectorInterface
      */
-    public function getResult() : ResultInfoInterface
+    public function getResult() : ResultInspectorInterface
     {
         return $this->result;
     }

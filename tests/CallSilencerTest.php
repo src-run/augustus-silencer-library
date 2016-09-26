@@ -11,15 +11,15 @@
 
 namespace SR\Silencer\Tests;
 
-use SR\Silencer\Call\CallSilencerFactory;
-use SR\Silencer\Call\Context\CallDefinitionInterface;
-use SR\Silencer\Call\Result\ResultInfoInterface;
+use SR\Silencer\Call\CallDefinitionInterface;
+use SR\Silencer\Call\Result\ResultInspectorInterface;
+use SR\Silencer\CallSilencerFactory;
 use SR\Silencer\Silencer;
 
 /**
- * @covers \SR\Silencer\Call\CallSilencerFactory
- * @covers \SR\Silencer\Call\Context\CallDefinition
- * @covers \SR\Silencer\Call\Result\ResultInfo
+ * @covers \SR\Silencer\CallSilencerFactory
+ * @covers \SR\Silencer\Call\CallDefinition
+ * @covers \SR\Silencer\Call\Result\ResultInspector
  * @covers \SR\Silencer\Call\Runner\ClosureRunner
  */
 class CallSilencerTest extends \PHPUnit_Framework_TestCase
@@ -194,7 +194,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         }, $silencer)->invoke();
 
         $this->assertTrue($ret->isCalled());
-        $this->assertInstanceOf(ResultInfoInterface::class, $silencer->getResult());
+        $this->assertInstanceOf(ResultInspectorInterface::class, $silencer->getResult());
     }
 }
 
