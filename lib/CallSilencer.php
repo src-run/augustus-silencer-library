@@ -23,7 +23,7 @@ final class CallSilencer implements CallSilencerInterface
      *
      * @var \Closure
      */
-    private $invokable;
+    private $invokableInst;
 
     /**
      * Alternate object context to bind closure to.
@@ -37,7 +37,7 @@ final class CallSilencer implements CallSilencerInterface
      *
      * @var \Closure
      */
-    private $validator;
+    private $validatorInst;
 
     /**
      * Alternate object context to bind validation closure to.
@@ -65,41 +65,40 @@ final class CallSilencer implements CallSilencerInterface
      *
      * @var bool
      */
-    private $restore;
+    private $restoreReportingLevel;
 
     /**
      * True if closure has been invoked.
      *
      * @var bool
      */
-    private $invoked;
+    private $called;
 
     /**
      * Constructor allows for setting main closure or validation closure.
      *
-     * @param \Closure|null $invokable Closure instance called in silenced environment
-     * @param \Closure|null $validator Optional closure that determines validity of return value
-     * @param object        $bind      Optional binding context to apply to closures
+     * @param \Closure|null $invokableInst Main invokable called in an error-silenced environment
+     * @param object        $invokableBind Binding for main invokable closure call
+     * @param \Closure|null $validatorInst Validation checker that determines return value validity
+     * @param object        $validatorBind Binding for result validation closure
      */
-    public function __construct(\Closure $invokable = null, \Closure $validator = null, $bind = null)
+    public function __construct(\Closure $invokableInst = null, $invokableBind = null, \Closure $validatorInst = null, $validatorBind = null)
     {
-        $this
-            ->setInvokable($invokable, $bind)
-            ->setValidator($validator, $bind);
+        $this->setInvokable($invokableInst, $invokableBind);
+        $this->setValidator($validatorInst, $validatorBind);
     }
 
     /**
      * Static method constructs method using same options as main constructor.
      *
-     * @param \Closure|null $invokable Closure instance called in silenced environment
-     * @param \Closure|null $validator Optional closure that determines validity of return value
-     * @param object        $bind      Optional binding context to apply to closures
+     * @param \Closure|null $invokableInst Main invokable called in an error-silenced environment
+     * @param \Closure|null $validatorInst Validation checker that determines return value validity
      *
      * @return static|CallSilencerInterface
      */
-    public static function create(\Closure $invokable = null, \Closure $validator = null, $bind = null) : CallSilencerInterface
+    public static function create(\Closure $invokableInst = null, \Closure $validatorInst = null) : CallSilencerInterface
     {
-        return new static($invokable, $validator, $bind);
+        return new static($invokableInst, null, $validatorInst, null);
     }
 
     /**
@@ -109,7 +108,7 @@ final class CallSilencer implements CallSilencerInterface
      */
     public function disableSilencerRestoration() : CallSilencerInterface
     {
-        $this->restore = false;
+        $this->restoreReportingLevel = false;
 
         return $this;
     }
@@ -117,14 +116,30 @@ final class CallSilencer implements CallSilencerInterface
     /**
      * Assigns a \Closure instance that will be called in error silenced environment.
      *
-     * @param \Closure $invokable A closure to call in silenced environment
-     * @param object   $bind      Optional binding context to apply to closure when called
+     * @param \Closure $invokableInst A closure to call in silenced environment
+     * @param object   $invokableBind      Optional binding context to apply to closure when called
      *
      * @return CallSilencerInterface
      */
-    public function setInvokable(\Closure $invokable = null, $bind = null) : CallSilencerInterface
+    public function setInvokable(\Closure $invokableInst = null, $invokableBind = null) : CallSilencerInterface
     {
-        list($this->invokable, $this->invokableBind) = [$invokable, $bind];
+        $this->invokableInst = $invokableInst;
+        $this->setInvokableBind($invokableBind);
+
+        return $this;
+    }
+
+    /**
+     * Assign an alternate binding context/scope for main invokable closure. By default it is not re-bound
+     * and will have the context/scope of the object it was originally defined in.
+     *
+     * @param null|object $invokableBind Bind to apply to main invokable closure
+     *
+     * @return CallSilencerInterface
+     */
+    public function setInvokableBind($invokableBind = null) : CallSilencerInterface
+    {
+        $this->invokableBind = $invokableBind ?: $this->invokableBind;
 
         return $this;
     }
@@ -133,14 +148,31 @@ final class CallSilencer implements CallSilencerInterface
      * Assigns a \Closure instance used to determine return value validity. It is passed the return value and the php
      * error array (or null if non exists) as its only parameters.
      *
-     * @param \Closure $validator An instance of \Closure called to determine validity of return value and/or raised error
-     * @param object   $bind      Optional binding context to apply to closure when called
+     * @param \Closure $validatorInst An instance of \Closure called to determine validity of return value and/or raised error
+     * @param object   $validatorBind      Optional binding context to apply to closure when called
      *
      * @return CallSilencerInterface
      */
-    public function setValidator(\Closure $validator = null, $bind = null) : CallSilencerInterface
+    public function setValidator(\Closure $validatorInst = null, $validatorBind = null) : CallSilencerInterface
     {
-        list($this->validator, $this->validatorBind) = [$validator, $bind];
+        $this->validatorInst = $validatorInst;
+        $this->setValidatorBind($validatorBind);
+
+        return $this;
+    }
+
+    /**
+     * Assign an alternate binding context/scope for validation closure. By default it is bound
+     * to the silencer instance itself, allowing it to access the array of helper methods regarding
+     * return values and errors.
+     *
+     * @param null|object $validatorBind Bind to apply to result validation closure
+     *
+     * @return CallSilencerInterface
+     */
+    public function setValidatorBind($validatorBind = null) : CallSilencerInterface
+    {
+        $this->validatorBind = $validatorBind ?: $this->validatorBind;
 
         return $this;
     }
@@ -156,19 +188,19 @@ final class CallSilencer implements CallSilencerInterface
      */
     public function invoke(...$parameters) : CallSilencerInterface
     {
-        if (!$this->invokable) {
+        if (false === $this->invokableInst instanceof \Closure) {
             return $this;
         }
 
-        $result = null;
+        $results = null;
 
         try {
-            $this->invokeSetUp();
-            $result = $this->invokeClosure($this->invokable, $this->invokableBind, ...$parameters);
+            $this->preInvokeActions();
+            $results = $this->doInvoke($this->invokableInst, $this->invokableBind, ...$parameters);
         } catch (\Exception $e) {
             throw $e;
         } finally {
-            $this->invokeTearDown($result);
+            $this->postInvokeActions($results);
         }
 
         return $this;
@@ -181,7 +213,7 @@ final class CallSilencer implements CallSilencerInterface
      */
     public function isInvoked() : bool
     {
-        return $this->invoked === true;
+        return $this->called === true;
     }
 
     /**
@@ -243,11 +275,12 @@ final class CallSilencer implements CallSilencerInterface
      */
     public function isResultValid() : bool
     {
-        if (!$this->validator) {
+        if (!$this->validatorInst) {
             return !$this->hasError();
         }
 
-        return $this->invokeClosure($this->validator, $this->validatorBind, $this->result, $this->raisedError) ? true : false;
+        return (bool) $this->doInvoke(
+            $this->validatorInst, $this->validatorBind, $this->result, $this->raisedError, $this);
     }
 
     /**
@@ -295,48 +328,45 @@ final class CallSilencer implements CallSilencerInterface
     }
 
     /**
-     * @param \Closure    $closure
-     * @param object|null $bind
-     * @param mixed       ...$parameters
+     * @param \Closure $closure
+     * @param mixed    $binding
+     * @param mixed    ...$parameters
      *
      * @return mixed
      */
-    private function invokeClosure(\Closure $closure, $bind = null, ...$parameters)
+    private function doInvoke(\Closure $closure, $binding = null, ...$parameters)
     {
-        if (null !== $bind) {
-            $closure = $closure->bindTo($bind, $bind);
+        if ($binding) {
+            $closure = $closure->bindTo($binding, $binding);
         }
 
         return $closure(...$parameters);
     }
 
     /**
-     * @return CallSilencerInterface
+     * @return void
      */
-    private function invokeSetUp() : CallSilencerInterface
+    private function preInvokeActions()
     {
-        $this->invokeState(false, null, null);
+        $this->assignSelfState(false, null, null);
 
         Silencer::silenceIfNot();
         EngineError::clearLastError();
-
-        return $this;
     }
 
     /**
      * @param mixed $result
      *
-     * @return CallSilencerInterface
+     * @return void
      */
-    private function invokeTearDown($result) : CallSilencerInterface
+    private function postInvokeActions($result)
     {
-        $this->invokeState(true, EngineError::getLastError(), $result);
+        $error = EngineError::getLastError();
+        $this->assignSelfState(true, $error, $result);
 
-        if (false !== $this->restore) {
+        if (false !== $this->restoreReportingLevel) {
             Silencer::restore();
         }
-
-        return $this;
     }
 
     /**
@@ -344,9 +374,9 @@ final class CallSilencer implements CallSilencerInterface
      * @param mixed[]|null $raisedError
      * @param mixed        $result
      */
-    private function invokeState(bool $invoked, array $raisedError = null, $result)
+    private function assignSelfState(bool $invoked, array $raisedError = null, $result)
     {
-        list($this->invoked, $this->raisedError, $this->result) =
+        list($this->called, $this->raisedError, $this->result) =
             [$invoked, $raisedError, $result];
     }
 }
