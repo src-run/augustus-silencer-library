@@ -101,5 +101,3 @@ interface ResultInspectorInterface
      */
     public function getErrorType();
 }
-
-/* EOF */

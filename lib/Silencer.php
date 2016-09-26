@@ -11,9 +11,6 @@
 
 namespace SR\Silencer;
 
-/**
- * Engine error reporting silencing/restoring API.
- */
 final class Silencer implements SilencerInterface
 {
     /**
@@ -165,5 +162,3 @@ final class Silencer implements SilencerInterface
         return $mask & ~($subtract ?: self::NEGATIVE_SILENCE_MASK);
     }
 }
-
-/* EOF */

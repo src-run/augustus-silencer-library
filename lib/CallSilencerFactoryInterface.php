@@ -27,5 +27,3 @@ interface CallSilencerFactoryInterface
      */
     public static function create(\Closure $invokableInst = null, \Closure $validatorInst = null, $invokableBind = null, $validatorBind = null) : CallDefinition;
 }
-
-/* EOF */

@@ -11,9 +11,6 @@
 
 namespace SR\Silencer;
 
-/**
- * Interface for engine error reporting silencing/restoring API.
- */
 interface SilencerInterface
 {
     /**
@@ -60,5 +57,3 @@ interface SilencerInterface
      */
     public static function isRestorable() : bool;
 }
-
-/* EOF */

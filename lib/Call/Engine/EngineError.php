@@ -11,9 +11,6 @@
 
 namespace SR\Silencer\Call\Engine;
 
-/**
- * Simple engine error API.
- */
 final class EngineError
 {
     /**
@@ -60,5 +57,3 @@ final class EngineError
         return true;
     }
 }
-
-/* EOF */

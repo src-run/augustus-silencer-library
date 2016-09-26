@@ -197,5 +197,3 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(ResultInspectorInterface::class, $silencer->getResult());
     }
 }
-
-/* EOF */

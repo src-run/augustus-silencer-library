@@ -41,5 +41,3 @@ interface ClosureRunnerInterface
      */
     public static function actionsAfter();
 }
-
-/* EOF */

@@ -13,9 +13,6 @@ namespace SR\Silencer\Call;
 
 use SR\Silencer\Call\Result\ResultInspectorInterface;
 
-/**
- * Interface for calling closure in error-silenced context.
- */
 interface CallDefinitionInterface
 {
     /**
@@ -75,5 +72,3 @@ interface CallDefinitionInterface
      */
     public function getResult() : ResultInspectorInterface;
 }
-
-/* EOF */

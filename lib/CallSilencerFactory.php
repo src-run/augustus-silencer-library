@@ -34,5 +34,3 @@ final class CallSilencerFactory implements CallSilencerFactoryInterface
         return $definition;
     }
 }
-
-/* EOF */

@@ -34,5 +34,3 @@ class EngineErrorTest extends \PHPUnit_Framework_TestCase
         $this->assertNull(EngineError::getLast());
     }
 }
-
-/* EOF */

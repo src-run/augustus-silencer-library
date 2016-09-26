@@ -191,5 +191,3 @@ final class ResultInspector implements ResultInspectorInterface
         return $this->getError('type');
     }
 }
-
-/* EOF */

@@ -15,9 +15,6 @@ use SR\Silencer\Call\Result\ResultInspector;
 use SR\Silencer\Call\Result\ResultInspectorInterface;
 use SR\Silencer\Call\Runner\ClosureRunner;
 
-/**
- * Simple API for calling closure in error-silenced context.
- */
 final class CallDefinition implements CallDefinitionInterface
 {
     /**
@@ -133,5 +130,3 @@ final class CallDefinition implements CallDefinitionInterface
         return $this->result;
     }
 }
-
-/* EOF */

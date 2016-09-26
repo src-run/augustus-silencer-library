@@ -11,7 +11,6 @@
 
 namespace SR\Silencer\Call\Runner;
 
-use Gitonomy\Git\Exception\RuntimeException;
 use SR\Silencer\Call\Engine\EngineError;
 use SR\Silencer\Silencer;
 
@@ -81,7 +80,7 @@ final class ClosureRunner implements ClosureRunnerInterface
         try {
             $return = $toCall(...$parameters);
         } catch (\Exception $exception) {
-            throw new RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
+            throw new \RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
         } finally {
             $raised = static::actionsAfter();
         }
@@ -113,5 +112,3 @@ final class ClosureRunner implements ClosureRunnerInterface
         return EngineError::getLast();
     }
 }
-
-/* EOF */
