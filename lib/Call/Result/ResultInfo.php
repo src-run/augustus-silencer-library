@@ -16,6 +16,16 @@ use SR\Silencer\Call\Runner\ClosureRunner;
 final class ResultInfo implements ResultInfoInterface
 {
     /**
+     * @var \Closure
+     */
+    private $validator;
+
+    /**
+     * @var object
+     */
+    private $binding;
+
+    /**
      * @var mixed
      */
     private $result;
@@ -26,62 +36,45 @@ final class ResultInfo implements ResultInfoInterface
     private $raised;
 
     /**
-     * @var \Closure
-     */
-    private $validatorInst;
-
-    /**
-     * @var object
-     */
-    private $validatorBind;
-
-    /**
-     * True if closure has been invoked.
-     *
      * @var bool
      */
-    private $called;
+    private $called = false;
 
     /**
-     * @param mixed         $result
-     * @param mixed[]|null  $raised
-     * @param bool          $called
-     * @param \Closure|null $validatorInst
-     * @param object        $validatorBind
+     * @param \Closure|null $validator
+     * @param object        $binding
      */
-    public function __construct($result, array $raised = null, $called = true, \Closure $validatorInst = null, $validatorBind = null)
+    public function __construct(\Closure $validator = null, $binding = null)
+    {
+        $this->setValidator($validator, $binding);
+    }
+
+    /**
+     * @param \Closure $validator
+     * @param object   $binding
+     *
+     * @return ResultInfoInterface
+     */
+    public function setValidator(\Closure $validator = null, $binding = null) : ResultInfoInterface
+    {
+        $this->validator = $validator;
+        $this->binding = $binding ?: $this->binding;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed      $result
+     * @param array|null $raised
+     * @param bool       $called
+     *
+     * @return ResultInfoInterface
+     */
+    public function setResult($result, array $raised = null, $called = true) : ResultInfoInterface
     {
         $this->result = $result;
         $this->raised = $raised;
         $this->called = $called;
-
-        $this->setValidator($validatorInst, $validatorBind);
-    }
-
-    /**
-     * @param mixed         $result
-     * @param mixed[]|null  $raised
-     * @param bool          $called
-     * @param \Closure|null $validatorInst
-     * @param object        $validatorBind
-     *
-     * @return ResultInfoInterface
-     */
-    public static function create($result, array $raised = null, $called = true, \Closure $validatorInst = null, $validatorBind = null) : ResultInfoInterface
-    {
-        return new static($result, $raised, $called, $validatorInst, $validatorBind);
-    }
-
-    /**
-     * @param \Closure $validatorInst
-     * @param object   $validatorBind
-     *
-     * @return ResultInfoInterface
-     */
-    public function setValidator(\Closure $validatorInst = null, $validatorBind = null) : ResultInfoInterface
-    {
-        $this->validatorInst = $validatorInst;
-        $this->validatorBind = $validatorBind ?: $this->validatorBind;
 
         return $this;
     }
@@ -99,15 +92,7 @@ final class ResultInfo implements ResultInfoInterface
     /**
      * @return mixed
      */
-    public function get()
-    {
-        return $this->getResult();
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getResult()
+    public function getReturn()
     {
         return $this->result;
     }
@@ -115,7 +100,7 @@ final class ResultInfo implements ResultInfoInterface
     /**
      * @return bool
      */
-    public function has() : bool
+    public function hasReturn() : bool
     {
         return $this->result !== null;
     }
@@ -151,14 +136,15 @@ final class ResultInfo implements ResultInfoInterface
      */
     public function isValid() : bool
     {
-        if (!$this->validatorInst) {
+        if (!$this->validator) {
             return !$this->hasError();
         }
 
-        $runner = ClosureRunner::create($this->validatorInst, $this->validatorBind);
-        $runner->invoke($valid, $ignore, $this->result, $this->raised, $this);
+        list($result) = ClosureRunner::create()
+            ->setInvokable($this->validator, $this->binding)
+            ->runInvokable($this->result, $this->raised, $this);
 
-        return (bool) $valid;
+        return (bool) $result;
     }
 
     /**

@@ -14,19 +14,27 @@ namespace SR\Silencer\Call\Runner;
 interface ClosureRunnerInterface
 {
     /**
-     * @param \Closure    $closure
-     * @param null|object $binding
+     * @param \Closure $closure
+     * @param object   $binding
      *
      * @return ClosureRunnerInterface
      */
-    public static function create(\Closure $closure, $binding = null) : ClosureRunnerInterface;
+    public static function create(\Closure $closure = null, $binding = null) : ClosureRunnerInterface;
 
     /**
-     * @param mixed $result
-     * @param mixed $errors
-     * @param array ...$parameters
+     * @param \Closure $closure
+     * @param object   $binding
+     *
+     * @return ClosureRunnerInterface
      */
-    public function invoke(&$result, &$errors, ...$parameters);
+    public function setInvokable(\Closure $closure = null, $binding = null) : ClosureRunnerInterface;
+
+    /**
+     * @param array ...$parameters
+     *
+     * @return mixed[]
+     */
+    public function runInvokable(...$parameters);
 
     /**
      * @return \mixed[]|null

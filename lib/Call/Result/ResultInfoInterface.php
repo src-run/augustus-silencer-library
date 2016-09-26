@@ -14,36 +14,29 @@ namespace SR\Silencer\Call\Result;
 interface ResultInfoInterface
 {
     /**
-     * @param mixed         $result
-     * @param mixed[]|null  $raised
-     * @param bool          $called
-     * @param \Closure|null $validatorInst
-     * @param object        $validatorBind
+     * @param \Closure|null $validator
+     * @param object        $binding
      */
-    public function __construct($result, array $raised = null, $called = true, \Closure $validatorInst = null, $validatorBind = null);
+    public function __construct(\Closure $validator = null, $binding = null);
 
     /**
-     * @param mixed         $result
-     * @param mixed[]|null  $raised
-     * @param bool          $called
-     * @param \Closure|null $validatorInst
-     * @param object        $validatorBind
+     * @param \Closure $validator
+     * @param object   $binding
      *
      * @return ResultInfoInterface
      */
-    public static function create($result, array $raised = null, $called = true, \Closure $validatorInst = null, $validatorBind = null) : ResultInfoInterface;
+    public function setValidator(\Closure $validator = null, $binding = null) : ResultInfoInterface;
 
     /**
-     * @param \Closure $validatorInst
-     * @param object   $validatorBind
+     * @param mixed      $result
+     * @param array|null $raised
+     * @param bool       $called
      *
      * @return ResultInfoInterface
      */
-    public function setValidator(\Closure $validatorInst = null, $validatorBind = null) : ResultInfoInterface;
+    public function setResult($result, array $raised = null, $called = true) : ResultInfoInterface;
 
     /**
-     * Returns true if the closure was called.
-     *
      * @return bool
      */
     public function isCalled() : bool;
@@ -51,17 +44,12 @@ interface ResultInfoInterface
     /**
      * @return mixed
      */
-    public function get();
-
-    /**
-     * @return mixed
-     */
-    public function getResult();
+    public function getReturn();
 
     /**
      * @return bool
      */
-    public function has() : bool;
+    public function hasReturn() : bool;
 
     /**
      * @param mixed $comparison

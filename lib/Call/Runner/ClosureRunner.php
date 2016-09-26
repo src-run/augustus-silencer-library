@@ -11,53 +11,82 @@
 
 namespace SR\Silencer\Call\Runner;
 
+use Gitonomy\Git\Exception\RuntimeException;
 use SR\Silencer\Silencer;
 use SR\Silencer\Util\PhpError;
 
 final class ClosureRunner implements ClosureRunnerInterface
 {
     /**
+     * Closure instance invoked in silenced environment.
+     *
      * @var \Closure
      */
     private $closure;
 
     /**
+     * Alternate object context to bind closure to.
+     *
      * @var object
      */
     private $binding;
 
     /**
-     * @param \Closure    $closure
-     * @param null|object $binding
-     */
-    public function __construct(\Closure $closure, $binding = null)
-    {
-        $this->closure = $closure;
-        $this->binding = $binding;
-    }
-
-    /**
-     * @param \Closure    $closure
-     * @param null|object $binding
+     * @param \Closure $closure
+     * @param object   $binding
      *
      * @return ClosureRunnerInterface
      */
-    public static function create(\Closure $closure, $binding = null) : ClosureRunnerInterface
+    public static function create(\Closure $closure = null, $binding = null) : ClosureRunnerInterface
     {
-        return new static($closure, $binding);
+        $runner = new static();
+        $runner->setInvokable($closure, $binding);
+
+        return $runner;
     }
 
     /**
-     * @param mixed $result
-     * @param mixed $errors
-     * @param array ...$parameters
+     * @param \Closure $closure
+     * @param object   $binding
+     *
+     * @return ClosureRunnerInterface
      */
-    public function invoke(&$result, &$errors, ...$parameters)
+    public function setInvokable(\Closure $closure = null, $binding = null) : ClosureRunnerInterface
+    {
+        $this->closure = $closure;
+        $this->binding = $binding ?: $this->binding;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed ...$parameters
+     *
+     * @throws \Exception
+     *
+     * @return mixed[]
+     */
+    public function runInvokable(...$parameters)
     {
         static::actionsPrior();
-        $caller = $this->binding ? $this->closure->bindTo($this->binding, $this->binding) : $this->closure;
-        $result = $caller(...$parameters);
-        $errors = static::actionsAfter();
+
+        $toCall = $this->closure;
+
+        if ($this->binding) {
+            $toCall->bindTo($this->binding, $this->binding);
+        }
+
+        $return = $thrown = null;
+
+        try {
+            $return = $toCall(...$parameters);
+        } catch (\Exception $exception) {
+            throw new RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
+        } finally {
+            $raised = static::actionsAfter();
+        }
+
+        return [$return, isset($raised) ? $raised : static::actionsAfter(), true];
     }
 
     /**
@@ -77,7 +106,9 @@ final class ClosureRunner implements ClosureRunnerInterface
      */
     public static function actionsAfter()
     {
-        Silencer::restore();
+        if (Silencer::isSilenced() && Silencer::isRestorable()) {
+            Silencer::restore();
+        }
 
         return PhpError::getLastError();
     }
