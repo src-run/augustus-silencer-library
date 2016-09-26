@@ -11,11 +11,15 @@
 
 namespace SR\Silencer\Tests;
 
+use SR\Silencer\Call\Result\ResultInfoInterface;
 use SR\Silencer\CallSilencer;
 use SR\Silencer\Silencer;
 
 /**
  * @covers \SR\Silencer\CallSilencer
+ * @covers \SR\Silencer\Call\Define\Definition
+ * @covers \SR\Silencer\Call\Result\ResultInfo
+ * @covers \SR\Silencer\Call\Runner\ClosureRunner
  */
 class CallSilencerTest extends \PHPUnit_Framework_TestCase
 {
@@ -28,16 +32,19 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
     {
         $silencer = CallSilencer::create(function () {
             return true;
-        })->invoke();
+        });
+        $ret = $silencer->invoke();
 
         $this->assertTrue($silencer->hasResult());
-        $this->assertTrue($silencer->getResult());
-        $this->assertTrue($silencer->isResultTrue());
-        $this->assertFalse($silencer->isResultFalse());
-        $this->assertFalse($silencer->hasError());
-        $this->assertTrue($silencer->isResultValid());
-        $this->assertEmpty($silencer->getErrorMessage());
-        $this->assertNull($silencer->getErrorType());
+        $this->assertSame($ret, $silencer->getResult());
+        $this->assertTrue($ret->get());
+        $this->assertTrue($ret->isTrue());
+        $this->assertTrue($ret->has());
+        $this->assertFalse($ret->isFalse());
+        $this->assertFalse($ret->hasError());
+        $this->assertTrue($ret->isValid());
+        $this->assertEmpty($ret->getErrorMessage());
+        $this->assertNull($ret->getErrorType());
     }
 
     public function testConstruct()
@@ -50,47 +57,46 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $silencer = new CallSilencer(function () {
             return true;
         });
-        $silencer->invoke();
+        $ret = $silencer->invoke();
 
         $this->assertTrue($silencer->hasResult());
-        $this->assertTrue($silencer->getResult());
-        $this->assertTrue($silencer->isResultTrue());
-        $this->assertFalse($silencer->isResultFalse());
-        $this->assertFalse($silencer->hasError());
-        $this->assertEmpty($silencer->getErrorMessage());
-        $this->assertNull($silencer->getErrorType());
+        $this->assertTrue($ret->get());
+        $this->assertTrue($ret->isTrue());
+        $this->assertFalse($ret->isFalse());
+        $this->assertFalse($ret->hasError());
+        $this->assertEmpty($ret->getErrorMessage());
+        $this->assertNull($ret->getErrorType());
     }
 
     public function testInvokeWithRaisedError()
     {
         $silencer = new CallSilencer();
-        $silencer->setInvokable(function () {
+        $ret = $silencer->setInvokable(function () {
             return file_put_contents('/tmp/does/not/exist.ext', '');
         })->invoke();
 
         $this->assertTrue($silencer->hasResult());
-        $this->assertFalse($silencer->getResult());
-        $this->assertFalse($silencer->isResultTrue());
-        $this->assertTrue($silencer->isResultFalse());
-        $this->assertTrue($silencer->hasError());
-        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $silencer->getErrorMessage());
-        $this->assertNotNull($silencer->getErrorType());
+
+        $this->assertFalse($ret->get());
+        $this->assertFalse($ret->isTrue());
+        $this->assertTrue($ret->isFalse());
+        $this->assertTrue($ret->hasError());
+        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $ret->getErrorMessage());
+        $this->assertNotNull($ret->getErrorType());
     }
 
     public function testPriorErrorsClearedOnInvokeWithRaisedError()
     {
         $silencer = new CallSilencer();
-        $silencer->setInvokable(function () {
+        $ret = $silencer->setInvokable(function () {
             return file_put_contents('/tmp/does/not/exist.ext', '');
         })->invoke();
 
         $this->assertTrue($silencer->hasResult());
-        $this->assertFalse($silencer->getResult());
-        $this->assertFalse($silencer->isResultTrue());
-        $this->assertTrue($silencer->isResultFalse());
-        $this->assertTrue($silencer->hasError());
-        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $silencer->getErrorMessage());
-        $this->assertNotNull($silencer->getErrorType());
+        $this->assertFalse($ret->isTrue());
+        $this->assertTrue($ret->isFalse());
+        $this->assertTrue($ret->hasError());
+        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $ret->getErrorMessage());
     }
 
     public function testResultValidator()
@@ -102,42 +108,40 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $silencer->setValidator(function ($return) {
             return $return === false;
         });
-        $silencer->invoke();
+        $ret = $silencer->invoke();
 
-        $this->assertTrue($silencer->isResultValid());
         $this->assertTrue($silencer->hasResult());
-        $this->assertFalse($silencer->getResult());
-        $this->assertTrue($silencer->isResultFalse());
-        $this->assertFalse($silencer->isResultTrue());
-        $this->assertFalse($silencer->hasError());
-        $this->assertEmpty($silencer->getErrorMessage());
-        $this->assertNull($silencer->getErrorType());
+        $this->assertTrue($ret->isValid());
+        $this->assertFalse($ret->isTrue());
+        $this->assertTrue($ret->isFalse());
+        $this->assertFalse($ret->hasError());
+        $this->assertEmpty($ret->getErrorMessage());
+        $this->assertNull($ret->getErrorType());
     }
 
     public function testStaticCreateWithClosureAndValidator()
     {
-        $silencer = CallSilencer::create(function () {
+        $ret = $silencer = CallSilencer::create(function () {
             return false;
         }, function ($return) {
             return $return === false;
         })->invoke();
 
-        $this->assertTrue($silencer->isResultValid());
-        $this->assertTrue($silencer->hasResult());
-        $this->assertFalse($silencer->getResult());
-        $this->assertTrue($silencer->isResultFalse());
-        $this->assertFalse($silencer->isResultTrue());
-        $this->assertFalse($silencer->hasError());
-        $this->assertEmpty($silencer->getErrorMessage());
-        $this->assertNull($silencer->getErrorType());
+        $this->assertTrue($ret->isValid());
+        $this->assertFalse($ret->isTrue());
+        $this->assertTrue($ret->isFalse());
+        $this->assertFalse($ret->hasError());
+        $this->assertEmpty($ret->getErrorMessage());
+        $this->assertNull($ret->getErrorType());
+        $this->assertTrue($ret->isCalled());
     }
 
     public function testDoesNothingOnUnsetClosure()
     {
         $silencer = new CallSilencer();
-        $silencer->invoke();
+        $ret = $silencer->invoke();
 
-        $this->assertFalse($silencer->isInvoked());
+        $this->assertFalse($ret->isCalled());
     }
 
     public function testInnerClosureExceptionIsReThrown()
@@ -147,9 +151,9 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
             throw new \Exception('Inner closure exception.');
         });
 
-        $this->expectException(\Exception::class);
+        $this->expectException(\RuntimeException::class);
 
-        $silencer->invoke();
+        $ret = $silencer->invoke();
     }
 
     public function testCallsSilenceOnlyWhenRequired()
@@ -165,8 +169,6 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $silencer->setInvokable(function () {
             return true;
         });
-        $silencer->disableSilencerRestoration();
-        $silencer->invoke();
 
         $this->assertTrue(Silencer::isSilenced());
         $this->assertTrue(Silencer::isRestorable());
@@ -192,12 +194,12 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
     public function testInvokableBind()
     {
         $silencer = new CallSilencer();
-        $silencer->setInvokable(function () {
+        $ret = $silencer->setInvokable(function () {
             return static::class;
         }, $silencer)->invoke();
 
-        $this->assertTrue($silencer->isInvoked());
-        $this->assertSame(CallSilencer::class, $silencer->getResult());
+        $this->assertTrue($ret->isCalled());
+        $this->assertInstanceOf(ResultInfoInterface::class, $silencer->getResult());
     }
 }
 

@@ -14,7 +14,7 @@ namespace SR\Silencer\Util;
 /**
  * Simple engine error API.
  */
-final class EngineError
+final class PhpError
 {
     /**
      * Clears the last engine error.

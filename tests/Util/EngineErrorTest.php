@@ -11,27 +11,27 @@
 
 namespace SR\Silencer\Tests;
 
-use SR\Silencer\Util\EngineError;
+use SR\Silencer\Util\PhpError;
 
 /**
- * @covers \SR\Silencer\Util\EngineError
+ * @covers \SR\Silencer\Util\PhpError
  */
 class EngineErrorTest extends \PHPUnit_Framework_TestCase
 {
     public function testAccessors()
     {
-        $this->assertFalse(EngineError::hasLastError());
-        $this->assertNull(EngineError::getLastError());
+        $this->assertFalse(PhpError::hasLastError());
+        $this->assertNull(PhpError::getLastError());
 
         @file_put_contents('/tmp/file/does/not/exist.out', null);
 
-        $this->assertTrue(EngineError::hasLastError());
-        $this->assertNotNull(EngineError::getLastError());
+        $this->assertTrue(PhpError::hasLastError());
+        $this->assertNotNull(PhpError::getLastError());
 
-        EngineError::clearLastError();
+        PhpError::clearLastError();
 
-        $this->assertFalse(EngineError::hasLastError());
-        $this->assertNull(EngineError::getLastError());
+        $this->assertFalse(PhpError::hasLastError());
+        $this->assertNull(PhpError::getLastError());
     }
 }
 
