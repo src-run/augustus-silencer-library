@@ -117,7 +117,7 @@ final class CallSilencer implements CallSilencerInterface
      * Assigns a \Closure instance that will be called in error silenced environment.
      *
      * @param \Closure $invokableInst A closure to call in silenced environment
-     * @param object   $invokableBind      Optional binding context to apply to closure when called
+     * @param object   $invokableBind Optional binding context to apply to closure when called
      *
      * @return CallSilencerInterface
      */
@@ -134,7 +134,7 @@ final class CallSilencer implements CallSilencerInterface
      * error array (or null if non exists) as its only parameters.
      *
      * @param \Closure $validatorInst An instance of \Closure called to determine validity of return value and/or raised error
-     * @param object   $validatorBind      Optional binding context to apply to closure when called
+     * @param object   $validatorBind Optional binding context to apply to closure when called
      *
      * @return CallSilencerInterface
      */
@@ -312,9 +312,6 @@ final class CallSilencer implements CallSilencerInterface
         return $closure(...$parameters);
     }
 
-    /**
-     * @return void
-     */
     private function preInvokeActions()
     {
         $this->assignSelfState(false, null, null);
@@ -325,8 +322,6 @@ final class CallSilencer implements CallSilencerInterface
 
     /**
      * @param mixed $result
-     *
-     * @return void
      */
     private function postInvokeActions($result)
     {
