@@ -20,11 +20,11 @@ interface CallSilencerInterface
      * Constructor allows for setting main closure or validation closure.
      *
      * @param \Closure|null $invokableInst Main invokable called in an error-silenced environment
-     * @param object        $invokableBind Binding for main invokable closure call
      * @param \Closure|null $validatorInst Validation checker that determines return value validity
+     * @param object        $invokableBind Binding for main invokable closure call
      * @param object        $validatorBind Binding for result validation closure
      */
-    public function __construct(\Closure $invokableInst = null, $invokableBind = null, \Closure $validatorInst = null, $validatorBind = self::class);
+    public function __construct(\Closure $invokableInst = null, \Closure $validatorInst = null, $invokableBind = null, $validatorBind = self::class);
 
     /**
      * Static method constructs method using same options as main constructor.
@@ -53,16 +53,6 @@ interface CallSilencerInterface
     public function setInvokable(\Closure $invokableInst = null) : CallSilencerInterface;
 
     /**
-     * Assign an alternate binding context/scope for main invokable closure. By default it is not re-bound
-     * and will have the context/scope of the object it was originally defined in.
-     *
-     * @param null|object $invokableBind Bind to apply to main invokable closure
-     *
-     * @return CallSilencerInterface
-     */
-    public function setInvokableBind($invokableBind = null) : CallSilencerInterface;
-
-    /**
      * Assigns a \Closure instance used to determine return value validity. It is passed the return value and the php
      * error array (or null if non exists) as its only parameters.
      *
@@ -71,17 +61,6 @@ interface CallSilencerInterface
      * @return CallSilencerInterface
      */
     public function setValidator(\Closure $validatorInst = null) : CallSilencerInterface;
-
-    /**
-     * Assign an alternate binding context/scope for validation closure. By default it is bound
-     * to the silencer instance itself, allowing it to access the array of helper methods regarding
-     * return values and errors.
-     *
-     * @param null|object $validatorBind Bind to apply to result validation closure
-     *
-     * @return CallSilencerInterface
-     */
-    public function setValidatorBind($validatorBind = null) : CallSilencerInterface;
 
     /**
      * Invoke the closure within a silenced environment.
