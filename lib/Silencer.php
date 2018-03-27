@@ -11,13 +11,14 @@
 
 namespace SR\Silencer;
 
-final class Silencer implements SilencerInterface
+final class Silencer
 {
     /**
-     * An array of error reporting levels. Multiple calls to {@see Silencer::silence()} will shift new error reporting
-     * levels onto the beginning of this array. Subsequent calls to {@see Silencer::restore()} will unshift these saved
-     * error reporting levels and re-apply them.
-     *
+     * @var int
+     */
+    private const NEGATIVE_SILENCE_MASK = E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED | E_STRICT;
+
+    /**
      * @var int[]
      */
     private static $reportingLevelHistory = [];
@@ -29,7 +30,7 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    public static function silence(int $mask = null) : int
+    public static function silence(int $mask = null): int
     {
         static::unShiftLevelHistory(static::getErrorReporting());
 
@@ -45,7 +46,7 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    public static function silenceIfNot(int $mask = null) : int
+    public static function silenceIfNot(int $mask = null): int
     {
         if (!static::isSilenced()) {
             static::silence($mask);
@@ -59,9 +60,9 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    public static function restore() : int
+    public static function restore(): int
     {
-        if (!static::hasLevelHistory()) {
+        if (!static::hasPriorState()) {
             return static::getErrorReporting();
         }
 
@@ -73,9 +74,9 @@ final class Silencer implements SilencerInterface
      *
      * @return bool
      */
-    public static function isSilenced() : bool
+    public static function isSilenced(): bool
     {
-        if (!static::hasLevelHistory()) {
+        if (!static::hasPriorState()) {
             return false;
         }
 
@@ -88,17 +89,7 @@ final class Silencer implements SilencerInterface
      *
      * @return bool
      */
-    public static function isRestorable() : bool
-    {
-        return static::hasLevelHistory();
-    }
-
-    /**
-     * Returns true if prior restore state exists.
-     *
-     * @return bool
-     */
-    private static function hasLevelHistory() : bool
+    public static function hasPriorState(): bool
     {
         return (bool) count(static::$reportingLevelHistory) > 0;
     }
@@ -108,7 +99,7 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    private static function unShiftLevelHistory(int $level) : int
+    private static function unShiftLevelHistory(int $level): int
     {
         array_unshift(static::$reportingLevelHistory, $level);
 
@@ -118,7 +109,7 @@ final class Silencer implements SilencerInterface
     /**
      * @return int
      */
-    private static function shiftLevelHistory() : int
+    private static function shiftLevelHistory(): int
     {
         return array_shift(static::$reportingLevelHistory);
     }
@@ -126,9 +117,9 @@ final class Silencer implements SilencerInterface
     /**
      * @return int
      */
-    private static function priorLevelHistory()
+    private static function priorLevelHistory(): int
     {
-        return static::hasLevelHistory() ? static::$reportingLevelHistory[0] : static::getErrorReporting();
+        return static::hasPriorState() ? static::$reportingLevelHistory[0] : static::getErrorReporting();
     }
 
     /**
@@ -136,7 +127,7 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    private static function setErrorReporting(int $level) : int
+    private static function setErrorReporting(int $level): int
     {
         error_reporting($level);
 
@@ -146,7 +137,7 @@ final class Silencer implements SilencerInterface
     /**
      * @return int
      */
-    private static function getErrorReporting() : int
+    private static function getErrorReporting(): int
     {
         return error_reporting();
     }
@@ -157,7 +148,7 @@ final class Silencer implements SilencerInterface
      *
      * @return int
      */
-    private static function getSilencedMask(int $mask, int $subtract = null) : int
+    private static function getSilencedMask(int $mask, int $subtract = null): int
     {
         return $mask & ~($subtract ?: self::NEGATIVE_SILENCE_MASK);
     }

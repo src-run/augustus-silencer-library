@@ -13,22 +13,22 @@ namespace SR\Silencer\Call\Result;
 
 use SR\Silencer\Call\Runner\ClosureRunner;
 
-final class ResultInspector implements ResultInspectorInterface
+final class ResultInspector
 {
     /**
      * @var \Closure
      */
-    private $validator;
+    private $validatorClosure;
 
     /**
      * @var object
      */
-    private $binding;
+    private $validatorBinding;
 
     /**
      * @var mixed
      */
-    private $result;
+    private $return;
 
     /**
      * @var string[]|null
@@ -38,55 +38,48 @@ final class ResultInspector implements ResultInspectorInterface
     /**
      * @var bool
      */
-    private $called = false;
+    private $called;
 
     /**
-     * @param \Closure|null $validator
-     * @param object        $binding
+     * @param \Closure|null $validatorClosure
+     * @param object|null   $validatorBinding
      */
-    public function __construct(\Closure $validator = null, $binding = null)
+    public function __construct(\Closure $validatorClosure = null, $validatorBinding = null)
     {
-        $this->setValidator($validator, $binding);
-    }
-
-    /**
-     * @param \Closure $validator
-     * @param object   $binding
-     *
-     * @return ResultInspectorInterface
-     */
-    public function setValidator(\Closure $validator = null, $binding = null) : ResultInspectorInterface
-    {
-        $this->validator = $validator;
-        $this->binding = $binding ?: $this->binding;
-
-        return $this;
+        $this->validatorClosure = $validatorClosure;
+        $this->validatorBinding = $validatorBinding ?: $this->validatorBinding;
+        $this->called = false;
     }
 
     /**
      * @param mixed      $result
      * @param array|null $raised
-     * @param bool       $called
      *
-     * @return ResultInspectorInterface
+     * @return self
      */
-    public function setResult($result, array $raised = null, $called = true) : ResultInspectorInterface
+    public function setReturn($result, array $raised = null): self
     {
-        $this->result = $result;
+        $this->return = $result;
         $this->raised = $raised;
-        $this->called = $called;
+        $this->called = true;
 
         return $this;
     }
 
     /**
-     * Returns true if the closure was called.
-     *
      * @return bool
      */
-    public function isCalled() : bool
+    public function isCalled(): bool
     {
-        return $this->called === true;
+        return true === $this->called;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasReturn(): bool
+    {
+        return null !== $this->return;
     }
 
     /**
@@ -94,15 +87,7 @@ final class ResultInspector implements ResultInspectorInterface
      */
     public function getReturn()
     {
-        return $this->result;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasReturn() : bool
-    {
-        return $this->result !== null;
+        return $this->return;
     }
 
     /**
@@ -110,41 +95,47 @@ final class ResultInspector implements ResultInspectorInterface
      *
      * @return bool
      */
-    public function isEquitable($comparison) : bool
+    public function isEqual($comparison): bool
     {
-        return $this->result === $comparison;
+        return $this->return === $comparison;
     }
 
     /**
      * @return bool
      */
-    public function isTrue() : bool
+    public function isTrue(): bool
     {
-        return $this->isEquitable(true);
+        return $this->isEqual(true);
     }
 
     /**
      * @return bool
      */
-    public function isFalse() : bool
+    public function isFalse(): bool
     {
-        return $this->isEquitable(false);
+        return $this->isEqual(false);
     }
 
     /**
      * @return bool
      */
-    public function isValid() : bool
+    public function isValid(): bool
     {
-        if (!$this->validator) {
-            return !$this->hasError();
+        if (!$this->validatorClosure) {
+            return true !== $this->hasError();
         }
 
-        list($result) = ClosureRunner::create()
-            ->setInvokable($this->validator, $this->binding)
-            ->runInvokable($this->result, $this->raised, $this);
+        try {
+            [$return] = (new ClosureRunner($this->validatorClosure, $this->validatorBinding))->run(
+                $this->return,
+                $this->raised,
+                $this
+            );
 
-        return (bool) $result;
+            return (bool) $return;
+        } catch (\RuntimeException $exception) {
+            return false;
+        }
     }
 
     /**
@@ -152,7 +143,7 @@ final class ResultInspector implements ResultInspectorInterface
      *
      * @return bool
      */
-    public function hasError() : bool
+    public function hasError(): bool
     {
         return null !== $this->raised;
     }
@@ -160,7 +151,7 @@ final class ResultInspector implements ResultInspectorInterface
     /**
      * @param string|null $index
      *
-     * @return string|int|mixed[]
+     * @return string|int|array|null
      */
     public function getError(string $index = null)
     {
@@ -168,25 +159,21 @@ final class ResultInspector implements ResultInspectorInterface
             return null;
         }
 
-        return $index === null ? $this->raised : $this->raised[$index];
+        return null === $index ? $this->raised : $this->raised[$index];
     }
 
     /**
-     * Return the error message caused by a call in the invoked closure.
-     *
      * @return string
      */
-    public function getErrorMessage()
+    public function getErrorMessage(): ?string
     {
         return $this->getError('message');
     }
 
     /**
-     * Return the error type integer caused by a call in the invoked closure.
-     *
      * @return int
      */
-    public function getErrorType()
+    public function getErrorType(): ?int
     {
         return $this->getError('type');
     }

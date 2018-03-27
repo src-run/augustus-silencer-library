@@ -11,104 +11,76 @@
 
 namespace SR\Silencer\Call\Runner;
 
-use SR\Silencer\Call\Engine\EngineError;
 use SR\Silencer\Silencer;
 
-final class ClosureRunner implements ClosureRunnerInterface
+final class ClosureRunner
 {
     /**
-     * Closure instance invoked in silenced environment.
-     *
      * @var \Closure
      */
     private $closure;
 
     /**
-     * Alternate object context to bind closure to.
-     *
      * @var object
      */
     private $binding;
 
     /**
-     * @param \Closure $closure
-     * @param object   $binding
-     *
-     * @return ClosureRunnerInterface
+     * @param \Closure|null $closure
+     * @param object|null   $binding
      */
-    public static function create(\Closure $closure = null, $binding = null) : ClosureRunnerInterface
-    {
-        $runner = new static();
-        $runner->setInvokable($closure, $binding);
-
-        return $runner;
-    }
-
-    /**
-     * @param \Closure $closure
-     * @param object   $binding
-     *
-     * @return ClosureRunnerInterface
-     */
-    public function setInvokable(\Closure $closure = null, $binding = null) : ClosureRunnerInterface
+    public function __construct(\Closure $closure = null, $binding = null)
     {
         $this->closure = $closure;
-        $this->binding = $binding ?: $this->binding;
-
-        return $this;
+        $this->binding = $binding;
     }
 
     /**
      * @param mixed ...$parameters
      *
-     * @throws \Exception
+     * @throws \RuntimeException
      *
      * @return mixed[]
      */
-    public function runInvokable(...$parameters)
+    public function run(...$parameters): array
     {
-        static::actionsPrior();
-
-        $toCall = $this->closure;
+        static::silence();
 
         if ($this->binding) {
-            $toCall->bindTo($this->binding, $this->binding);
+            $this->closure->bindTo($this->binding, $this->binding);
         }
 
-        $return = $thrown = null;
+        $result = null;
 
         try {
-            $return = $toCall(...$parameters);
+            $result = ($this->closure)(...$parameters);
         } catch (\Exception $exception) {
             throw new \RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
         } finally {
-            $raised = static::actionsAfter();
+            $raised = static::restore();
         }
 
-        return [$return, isset($raised) ? $raised : static::actionsAfter(), true];
+        return [$result, $raised ?? static::restore()];
     }
 
     /**
-     * Clear error stack and silence if needed.
+     * @return array|null
      */
-    public static function actionsPrior()
+    private static function restore(): ?array
     {
-        EngineError::clearLast();
+        if (Silencer::isSilenced() && Silencer::hasPriorState()) {
+            Silencer::restore();
+        }
+
+        return error_get_last();
+    }
+
+    private static function silence(): void
+    {
+        error_clear_last();
 
         if (!Silencer::isSilenced()) {
             Silencer::silence();
         }
-    }
-
-    /**
-     * @return \mixed[]|null
-     */
-    public static function actionsAfter()
-    {
-        if (Silencer::isSilenced() && Silencer::isRestorable()) {
-            Silencer::restore();
-        }
-
-        return EngineError::getLast();
     }
 }

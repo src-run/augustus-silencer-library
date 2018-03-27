@@ -11,17 +11,18 @@
 
 namespace SR\Silencer\Tests;
 
+use PHPUnit\Framework\TestCase;
 use SR\Silencer\Silencer;
 
 /**
  * @covers \SR\Silencer\Silencer
  */
-class SilencerTest extends \PHPUnit_Framework_TestCase
+class SilencerTest extends TestCase
 {
     public function testSilenceAndRestore()
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
 
         $priorLevel = Silencer::silence();
 
@@ -30,12 +31,12 @@ class SilencerTest extends \PHPUnit_Framework_TestCase
         $rp->setAccessible(true);
 
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::isRestorable());
+        $this->assertTrue(Silencer::hasPriorState());
         $this->assertCount(1, $rp->getValue());
-        $this->assertSame(error_reporting(), $priorLevel & ~Silencer::NEGATIVE_SILENCE_MASK);
+        $this->assertSame(error_reporting(), $priorLevel & ~(E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED | E_STRICT));
 
         $restoredLevel = Silencer::restore();
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
         $this->assertFalse(Silencer::isSilenced());
         $this->assertSame(error_reporting(), $restoredLevel);
     }
@@ -43,7 +44,7 @@ class SilencerTest extends \PHPUnit_Framework_TestCase
     public function testRestoreWhenNotRestorable()
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
 
         $this->assertSame(error_reporting(), Silencer::restore());
     }
@@ -54,7 +55,7 @@ class SilencerTest extends \PHPUnit_Framework_TestCase
     public function testSilenceAndRestoreWithDifferentErrorMasks($mask)
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
 
         $priorLevel = Silencer::silenceIfNot($mask);
 
@@ -63,12 +64,12 @@ class SilencerTest extends \PHPUnit_Framework_TestCase
         $rp->setAccessible(true);
 
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::isRestorable());
+        $this->assertTrue(Silencer::hasPriorState());
         $this->assertCount(1, $rp->getValue());
         $this->assertSame(error_reporting(), $priorLevel & ~$mask);
 
         $restoredLevel = Silencer::restore();
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
         $this->assertFalse(Silencer::isSilenced());
         $this->assertSame(error_reporting(), $restoredLevel);
     }

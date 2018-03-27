@@ -12,57 +12,50 @@
 namespace SR\Silencer\Call;
 
 use SR\Silencer\Call\Result\ResultInspector;
-use SR\Silencer\Call\Result\ResultInspectorInterface;
 use SR\Silencer\Call\Runner\ClosureRunner;
 
-final class CallDefinition implements CallDefinitionInterface
+final class CallDefinition
 {
     /**
-     * Closure instance invoked in silenced environment.
-     *
-     * @var \Closure
+     * @var \Closure|null
      */
     private $closure;
 
     /**
-     * Alternate object context to bind closure to.
-     *
-     * @var object
+     * @var object|null
      */
     private $binding;
 
     /**
-     * Returning value of invoked closure.
-     *
      * @var ResultInspector
      */
-    private $result;
+    private $inspector;
 
     /**
      * Constructor allows for setting main closure or validation closure.
      *
-     * @param \Closure|null $closure          Main invokable called in an error-silenced environment
-     * @param \Closure|null $validator        Validation checker that determines return value validity
-     * @param object        $closureBinding   Binding for main invokable closure call
-     * @param object        $validatorBinding Binding for result validation closure
+     * @param \Closure|null $invokable       Main invokable called in an error-silenced environment
+     * @param \Closure|null $validator       Validation checker that determines return value validity
+     * @param object        $bindToInvokable Binding for main invokable closure call
+     * @param object        $bindToValidator Binding for result validation closure
      */
-    public function __construct(\Closure $closure = null, \Closure $validator = null, $closureBinding = null, $validatorBinding = null)
+    public function __construct(\Closure $invokable = null, \Closure $validator = null, $bindToInvokable = null, $bindToValidator = null)
     {
-        $this->setInvokable($closure, $closureBinding);
-        $this->setValidator($validator, $validatorBinding);
+        $this->setInvokable($invokable, $bindToInvokable);
+        $this->setValidator($validator, $bindToValidator);
     }
 
     /**
      * Static method constructs method using same options as main constructor.
      *
-     * @param \Closure|null $closure   Main invokable called in an error-silenced environment
+     * @param \Closure|null $invokable Main invokable called in an error-silenced environment
      * @param \Closure|null $validator Validation checker that determines return value validity
      *
-     * @return static|CallDefinitionInterface
+     * @return static|self
      */
-    public static function create(\Closure $closure = null, \Closure $validator = null) : CallDefinitionInterface
+    public static function create(\Closure $invokable = null, \Closure $validator = null): self
     {
-        return new static($closure, $validator);
+        return new static($invokable, $validator);
     }
 
     /**
@@ -71,9 +64,9 @@ final class CallDefinition implements CallDefinitionInterface
      * @param \Closure $closure A closure to call in silenced environment
      * @param object   $binding Optional binding context to apply to closure when called
      *
-     * @return CallDefinitionInterface
+     * @return self
      */
-    public function setInvokable(\Closure $closure = null, $binding = null) : CallDefinitionInterface
+    public function setInvokable(\Closure $closure = null, $binding = null): self
     {
         $this->closure = $closure;
         $this->binding = $binding ?: $this->binding;
@@ -88,11 +81,11 @@ final class CallDefinition implements CallDefinitionInterface
      * @param \Closure $validator An instance of \Closure called to determine validity of return value and/or raised error
      * @param object   $binding   Optional binding context to apply to closure when called
      *
-     * @return CallDefinitionInterface
+     * @return self
      */
-    public function setValidator(\Closure $validator = null, $binding = null) : CallDefinitionInterface
+    public function setValidator(\Closure $validator = null, $binding = null): self
     {
-        $this->result = new ResultInspector($validator, $binding ?: $binding);
+        $this->inspector = new ResultInspector($validator, $binding);
 
         return $this;
     }
@@ -102,31 +95,24 @@ final class CallDefinition implements CallDefinitionInterface
      *
      * @param mixed ...$parameters Any parameters to call to invoked closure
      *
-     * @throws \Exception If an exception is thrown within the \Closure instance
-     *
-     * @return ResultInspectorInterface
+     * @return ResultInspector
      */
-    public function invoke(...$parameters) : ResultInspectorInterface
+    public function invoke(...$parameters): ResultInspector
     {
-        if (!$this->closure) {
-            return $this->result;
+        if ($this->closure) {
+            $this->inspector->setReturn(...(new ClosureRunner($this->closure, $this->binding))->run(...$parameters));
         }
 
-        $raised = null;
-        $result = ClosureRunner::create()
-            ->setInvokable($this->closure, $this->binding)
-            ->runInvokable(...$parameters);
-
-        return $this->result->setResult(...$result);
+        return $this->inspector;
     }
 
     /**
      * Get the return value invoked closure.
      *
-     * @return \SR\Silencer\Call\Result\ResultInspectorInterface
+     * @return ResultInspector
      */
-    public function getResult() : ResultInspectorInterface
+    public function getResult(): ResultInspector
     {
-        return $this->result;
+        return $this->inspector;
     }
 }

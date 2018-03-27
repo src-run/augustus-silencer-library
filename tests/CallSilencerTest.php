@@ -11,8 +11,9 @@
 
 namespace SR\Silencer\Tests;
 
-use SR\Silencer\Call\CallDefinitionInterface;
-use SR\Silencer\Call\Result\ResultInspectorInterface;
+use PHPUnit\Framework\TestCase;
+use SR\Silencer\Call\CallDefinition;
+use SR\Silencer\Call\Result\ResultInspector;
 use SR\Silencer\CallSilencerFactory;
 use SR\Silencer\Silencer;
 
@@ -22,16 +23,16 @@ use SR\Silencer\Silencer;
  * @covers \SR\Silencer\Call\Result\ResultInspector
  * @covers \SR\Silencer\Call\Runner\ClosureRunner
  */
-class CallSilencerTest extends \PHPUnit_Framework_TestCase
+class CallSilencerTest extends TestCase
 {
     public function testStaticConstruct()
     {
-        $this->assertInstanceOf(CallDefinitionInterface::class, CallSilencerFactory::create());
+        $this->assertInstanceOf(CallDefinition::class, CallSilencerFactory::create());
     }
 
     public function testStaticConstructAndInvoke()
     {
-        $silencer = CallSilencerFactory::create(function () {
+        $silencer = \SR\Silencer\CallSilencerFactory::create(function () {
             return true;
         });
         $ret = $silencer->invoke();
@@ -49,12 +50,12 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
 
     public function testConstruct()
     {
-        $this->assertInstanceOf(CallDefinitionInterface::class, CallSilencerFactory::create());
+        $this->assertInstanceOf(CallDefinition::class, \SR\Silencer\CallSilencerFactory::create());
     }
 
     public function testConstructAndInvoke()
     {
-        $silencer = CallSilencerFactory::create(function () {
+        $silencer = \SR\Silencer\CallSilencerFactory::create(function () {
             return true;
         });
         $ret = $silencer->invoke();
@@ -69,7 +70,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
 
     public function testInvokeWithRaisedError()
     {
-        $silencer = CallSilencerFactory::create();
+        $silencer = \SR\Silencer\CallSilencerFactory::create();
         $ret = $silencer->setInvokable(function () {
             return file_put_contents('/tmp/does/not/exist.ext', '');
         })->invoke();
@@ -84,7 +85,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
 
     public function testPriorErrorsClearedOnInvokeWithRaisedError()
     {
-        $silencer = CallSilencerFactory::create();
+        $silencer = \SR\Silencer\CallSilencerFactory::create();
         $ret = $silencer->setInvokable(function () {
             return file_put_contents('/tmp/does/not/exist.ext', '');
         })->invoke();
@@ -102,7 +103,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
             return false;
         });
         $silencer->setValidator(function ($return) {
-            return $return === false;
+            return false === $return;
         });
         $ret = $silencer->invoke();
 
@@ -119,7 +120,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $ret = CallSilencerFactory::create(function () {
             return false;
         }, function ($return) {
-            return $return === false;
+            return false === $return;
         })->invoke();
 
         $this->assertTrue($ret->isValid());
@@ -131,9 +132,25 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($ret->isCalled());
     }
 
+    public function testStaticCreateWithClosureAndThrowingValidator()
+    {
+        $ret = CallSilencerFactory::create(function () {
+        }, function () {
+            throw new \Exception('An error occured!');
+        })->invoke();
+
+        $this->assertTrue($ret->isCalled());
+        $this->assertFalse($ret->isValid());
+        $this->assertFalse($ret->isTrue());
+        $this->assertFalse($ret->isFalse());
+        $this->assertFalse($ret->hasError());
+        $this->assertEmpty($ret->getErrorMessage());
+        $this->assertNull($ret->getErrorType());
+    }
+
     public function testDoesNothingOnUnsetClosure()
     {
-        $silencer = CallSilencerFactory::create();
+        $silencer = \SR\Silencer\CallSilencerFactory::create();
         $ret = $silencer->invoke();
 
         $this->assertFalse($ret->isCalled());
@@ -141,7 +158,7 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
 
     public function testInnerClosureExceptionIsReThrown()
     {
-        $silencer = CallSilencerFactory::create();
+        $silencer = \SR\Silencer\CallSilencerFactory::create();
         $silencer->setInvokable(function () {
             throw new \Exception('Inner closure exception.');
         });
@@ -154,11 +171,11 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
     public function testCallsSilenceOnlyWhenRequired()
     {
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
 
         Silencer::silence();
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::isRestorable());
+        $this->assertTrue(Silencer::hasPriorState());
 
         $silencer = CallSilencerFactory::create();
         $silencer->setInvokable(function () {
@@ -166,24 +183,24 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         });
 
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::isRestorable());
+        $this->assertTrue(Silencer::hasPriorState());
 
         Silencer::restore();
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
 
         Silencer::silence();
         $this->assertTrue(Silencer::isSilenced());
-        $this->assertTrue(Silencer::isRestorable());
+        $this->assertTrue(Silencer::hasPriorState());
 
-        $silencer = CallSilencerFactory::create();
+        $silencer = \SR\Silencer\CallSilencerFactory::create();
         $silencer->setInvokable(function () {
             return true;
         });
         $silencer->invoke(true);
 
         $this->assertFalse(Silencer::isSilenced());
-        $this->assertFalse(Silencer::isRestorable());
+        $this->assertFalse(Silencer::hasPriorState());
     }
 
     public function testInvokableBind()
@@ -194,6 +211,6 @@ class CallSilencerTest extends \PHPUnit_Framework_TestCase
         }, $silencer)->invoke();
 
         $this->assertTrue($ret->isCalled());
-        $this->assertInstanceOf(ResultInspectorInterface::class, $silencer->getResult());
+        $this->assertInstanceOf(ResultInspector::class, $silencer->getResult());
     }
 }
