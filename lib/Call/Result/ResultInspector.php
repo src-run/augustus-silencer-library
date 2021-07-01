@@ -41,8 +41,7 @@ final class ResultInspector
     private $called;
 
     /**
-     * @param \Closure|null $validatorClosure
-     * @param object|null   $validatorBinding
+     * @param object|null $validatorBinding
      */
     public function __construct(\Closure $validatorClosure = null, $validatorBinding = null)
     {
@@ -52,10 +51,7 @@ final class ResultInspector
     }
 
     /**
-     * @param mixed      $result
-     * @param array|null $raised
-     *
-     * @return self
+     * @param mixed $result
      */
     public function setReturn($result, array $raised = null): self
     {
@@ -66,17 +62,11 @@ final class ResultInspector
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function isCalled(): bool
     {
         return true === $this->called;
     }
 
-    /**
-     * @return bool
-     */
     public function hasReturn(): bool
     {
         return null !== $this->return;
@@ -92,33 +82,22 @@ final class ResultInspector
 
     /**
      * @param mixed $comparison
-     *
-     * @return bool
      */
     public function isEqual($comparison): bool
     {
         return $this->return === $comparison;
     }
 
-    /**
-     * @return bool
-     */
     public function isTrue(): bool
     {
         return $this->isEqual(true);
     }
 
-    /**
-     * @return bool
-     */
     public function isFalse(): bool
     {
         return $this->isEqual(false);
     }
 
-    /**
-     * @return bool
-     */
     public function isValid(): bool
     {
         if (!$this->validatorClosure) {
@@ -140,8 +119,6 @@ final class ResultInspector
 
     /**
      * Return true if an error was raised by invoking closure.
-     *
-     * @return bool
      */
     public function hasError(): bool
     {
@@ -149,8 +126,6 @@ final class ResultInspector
     }
 
     /**
-     * @param string|null $index
-     *
      * @return string|int|array|null
      */
     public function getError(string $index = null)

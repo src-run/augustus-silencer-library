@@ -79,7 +79,7 @@ class CallSilencerTest extends TestCase
         $this->assertFalse($ret->isTrue());
         $this->assertTrue($ret->isFalse());
         $this->assertTrue($ret->hasError());
-        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $ret->getErrorMessage());
+        $this->assertMatchesRegularExpression('{(file_put_contents.+?failed to open stream.+?|Failed to open stream: No such file or directory)}', $ret->getErrorMessage());
         $this->assertNotNull($ret->getErrorType());
     }
 
@@ -93,7 +93,7 @@ class CallSilencerTest extends TestCase
         $this->assertFalse($ret->isTrue());
         $this->assertTrue($ret->isFalse());
         $this->assertTrue($ret->hasError());
-        $this->assertRegExp('{file_put_contents.+?failed to open stream.+?}', $ret->getErrorMessage());
+        $this->assertMatchesRegularExpression('{(file_put_contents.+?failed to open stream.+?|Failed to open stream: No such file or directory)}', $ret->getErrorMessage());
     }
 
     public function testResultValidator()

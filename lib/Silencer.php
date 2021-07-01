@@ -27,8 +27,6 @@ final class Silencer
      * Enter new silenced error reporting level with optionally custom level mask.
      *
      * @param int|null $mask The new error mask to apply
-     *
-     * @return int
      */
     public static function silence(int $mask = null): int
     {
@@ -43,8 +41,6 @@ final class Silencer
      * Enter silenced error reporting level if not already in silenced state.
      *
      * @param int|null $mask The new error mask to apply
-     *
-     * @return int
      */
     public static function silenceIfNot(int $mask = null): int
     {
@@ -57,8 +53,6 @@ final class Silencer
 
     /**
      * Restore previous error reporting level assigned through call to {@see Silencer::silence}.
-     *
-     * @return int
      */
     public static function restore(): int
     {
@@ -71,8 +65,6 @@ final class Silencer
 
     /**
      * Returns true if if current error reporting level equals the default silenced level.
-     *
-     * @return bool
      */
     public static function isSilenced(): bool
     {
@@ -86,19 +78,12 @@ final class Silencer
 
     /**
      * Returns true if state is "restorable" (meaning a prior restore state exists).
-     *
-     * @return bool
      */
     public static function hasPriorState(): bool
     {
         return (bool) count(static::$reportingLevelHistory) > 0;
     }
 
-    /**
-     * @param int $level
-     *
-     * @return int
-     */
     private static function unShiftLevelHistory(int $level): int
     {
         array_unshift(static::$reportingLevelHistory, $level);
@@ -106,17 +91,11 @@ final class Silencer
         return $level;
     }
 
-    /**
-     * @return int
-     */
     private static function shiftLevelHistory(): int
     {
         return array_shift(static::$reportingLevelHistory);
     }
 
-    /**
-     * @return int
-     */
     private static function priorLevelHistory(): int
     {
         return static::hasPriorState() ? static::$reportingLevelHistory[0] : static::getErrorReporting();
@@ -124,8 +103,6 @@ final class Silencer
 
     /**
      * @param int|null $level
-     *
-     * @return int
      */
     private static function setErrorReporting(int $level): int
     {
@@ -134,20 +111,11 @@ final class Silencer
         return static::getErrorReporting();
     }
 
-    /**
-     * @return int
-     */
     private static function getErrorReporting(): int
     {
         return error_reporting();
     }
 
-    /**
-     * @param int      $mask
-     * @param int|null $subtract
-     *
-     * @return int
-     */
     private static function getSilencedMask(int $mask, int $subtract = null): int
     {
         return $mask & ~($subtract ?: self::NEGATIVE_SILENCE_MASK);

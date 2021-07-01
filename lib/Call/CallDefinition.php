@@ -63,8 +63,6 @@ final class CallDefinition
      *
      * @param \Closure $closure A closure to call in silenced environment
      * @param object   $binding Optional binding context to apply to closure when called
-     *
-     * @return self
      */
     public function setInvokable(\Closure $closure = null, $binding = null): self
     {
@@ -80,8 +78,6 @@ final class CallDefinition
      *
      * @param \Closure $validator An instance of \Closure called to determine validity of return value and/or raised error
      * @param object   $binding   Optional binding context to apply to closure when called
-     *
-     * @return self
      */
     public function setValidator(\Closure $validator = null, $binding = null): self
     {
@@ -94,8 +90,6 @@ final class CallDefinition
      * Invoke the closure within a silenced environment.
      *
      * @param mixed ...$parameters Any parameters to call to invoked closure
-     *
-     * @return ResultInspector
      */
     public function invoke(...$parameters): ResultInspector
     {
@@ -108,8 +102,6 @@ final class CallDefinition
 
     /**
      * Get the return value invoked closure.
-     *
-     * @return ResultInspector
      */
     public function getResult(): ResultInspector
     {

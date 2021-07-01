@@ -20,8 +20,6 @@ final class CallSilencerFactory
      * @param \Closure|null $validatorInst A closure instance that determines validity of silenced code return value
      * @param object|null   $invokableBind Alternative bind scope to apply to the silenced closure
      * @param object|null   $validatorBind Alternative bind scope to apply to validation closure
-     *
-     * @return CallDefinition
      */
     public static function create(\Closure $invokableInst = null, \Closure $validatorInst = null, $invokableBind = null, $validatorBind = null): CallDefinition
     {

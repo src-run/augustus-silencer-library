@@ -26,8 +26,7 @@ final class ClosureRunner
     private $binding;
 
     /**
-     * @param \Closure|null $closure
-     * @param object|null   $binding
+     * @param object|null $binding
      */
     public function __construct(\Closure $closure = null, $binding = null)
     {
@@ -63,9 +62,6 @@ final class ClosureRunner
         return [$result, $raised ?? static::restore()];
     }
 
-    /**
-     * @return array|null
-     */
     private static function restore(): ?array
     {
         if (Silencer::isSilenced() && Silencer::hasPriorState()) {
