@@ -22,6 +22,7 @@ use SR\Silencer\Silencer;
  * @covers \SR\Silencer\Call\CallDefinition
  * @covers \SR\Silencer\Call\Result\ResultInspector
  * @covers \SR\Silencer\Call\Runner\ClosureRunner
+ * @covers \SR\Silencer\Silencer
  */
 class CallSilencerTest extends TestCase
 {
@@ -161,11 +162,11 @@ class CallSilencerTest extends TestCase
         $silencer = CallSilencerFactory::create();
         $silencer->setInvokable(function () {
             throw new \Exception('Inner closure exception.');
-        });
+        })->setThrow(true);
 
         $this->expectException(\RuntimeException::class);
 
-        $ret = $silencer->invoke();
+        $silencer->invoke();
     }
 
     public function testCallsSilenceOnlyWhenRequired()
@@ -212,5 +213,16 @@ class CallSilencerTest extends TestCase
 
         $this->assertTrue($ret->isCalled());
         $this->assertInstanceOf(ResultInspector::class, $silencer->getResult());
+    }
+
+    public function testInternalExceptionCatch()
+    {
+        $return = CallSilencerFactory::create(function () {
+            return fwrite(null, 'foobar');
+        })->invoke();
+
+        $this->assertFalse($return->isValid());
+        $this->assertFalse($return->isTrue());
+        $this->assertInstanceOf(\Throwable::class, $return->getThrown());
     }
 }

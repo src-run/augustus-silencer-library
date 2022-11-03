@@ -15,15 +15,11 @@ use SR\Silencer\Call\Runner\ClosureRunner;
 
 final class ResultInspector
 {
-    /**
-     * @var \Closure
-     */
     private ?\Closure $validatorClosure = null;
 
-    /**
-     * @var object
-     */
     private ?object $validatorBinding = null;
+
+    private ?\Throwable $thrown = null;
 
     private mixed $return;
 
@@ -41,13 +37,24 @@ final class ResultInspector
         $this->called = false;
     }
 
-    public function setReturn(mixed $result, array $raised = null): self
+    public function setReturn(mixed $result, array $raised = null, ?\Throwable $thrown = null): self
     {
         $this->return = $result;
         $this->raised = $raised;
+        $this->thrown = $thrown;
         $this->called = true;
 
         return $this;
+    }
+
+    public function hasThrown(): bool
+    {
+        return null !== $this->thrown;
+    }
+
+    public function getThrown(): \Throwable
+    {
+        return $this->thrown;
     }
 
     public function isCalled(): bool
@@ -83,7 +90,7 @@ final class ResultInspector
     public function isValid(): bool
     {
         if (!$this->validatorClosure) {
-            return true !== $this->hasError();
+            return true !== $this->hasError() && true !== $this->hasThrown();
         }
 
         try {

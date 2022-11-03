@@ -22,6 +22,8 @@ final class CallDefinition
 
     private ResultInspector $inspector;
 
+    private bool $throw = false;
+
     /**
      * Constructor allows for setting main closure or validation closure.
      *
@@ -78,6 +80,16 @@ final class CallDefinition
     }
 
     /**
+     * @return $this
+     */
+    public function setThrow(bool $throw): self
+    {
+        $this->throw = $throw;
+
+        return $this;
+    }
+
+    /**
      * Invoke the closure within a silenced environment.
      *
      * @param mixed ...$parameters Any parameters to call to invoked closure
@@ -85,7 +97,7 @@ final class CallDefinition
     public function invoke(...$parameters): ResultInspector
     {
         if ($this->closure) {
-            $this->inspector->setReturn(...(new ClosureRunner($this->closure, $this->binding))->run(...$parameters));
+            $this->inspector->setReturn(...(new ClosureRunner($this->closure, $this->binding, $this->throw))->run(...$parameters));
         }
 
         return $this->inspector;

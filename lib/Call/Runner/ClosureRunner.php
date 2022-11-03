@@ -19,16 +19,17 @@ final class ClosureRunner
 
     private ?object $binding;
 
-    public function __construct(\Closure $closure = null, object $binding = null)
+    private bool $throw;
+
+    public function __construct(\Closure $closure = null, object $binding = null, bool $throw = false)
     {
         $this->closure = $closure;
         $this->binding = $binding;
+        $this->throw = $throw;
     }
 
     /**
      * @param mixed ...$parameters
-     *
-     * @throws \RuntimeException
      */
     public function run(...$parameters): array
     {
@@ -39,16 +40,21 @@ final class ClosureRunner
         }
 
         $result = null;
+        $thrown = null;
 
         try {
             $result = ($this->closure)(...$parameters);
         } catch (\Throwable $exception) {
-            throw new \RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
+            $thrown = $exception;
+
+            if ($this->throw) {
+                throw new \RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
+            }
         } finally {
             $raised = self::restore();
         }
 
-        return [$result, $raised ?? static::restore()];
+        return [$result, $raised ?? static::restore(), $thrown];
     }
 
     private static function restore(): ?array
