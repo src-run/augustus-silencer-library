@@ -15,20 +15,11 @@ use SR\Silencer\Silencer;
 
 final class ClosureRunner
 {
-    /**
-     * @var \Closure
-     */
-    private $closure;
+    private \Closure $closure;
 
-    /**
-     * @var object
-     */
-    private $binding;
+    private ?object $binding;
 
-    /**
-     * @param object|null $binding
-     */
-    public function __construct(\Closure $closure = null, $binding = null)
+    public function __construct(\Closure $closure = null, object $binding = null)
     {
         $this->closure = $closure;
         $this->binding = $binding;
@@ -38,12 +29,10 @@ final class ClosureRunner
      * @param mixed ...$parameters
      *
      * @throws \RuntimeException
-     *
-     * @return mixed[]
      */
     public function run(...$parameters): array
     {
-        static::silence();
+        self::silence();
 
         if ($this->binding) {
             $this->closure->bindTo($this->binding, $this->binding);
@@ -53,10 +42,10 @@ final class ClosureRunner
 
         try {
             $result = ($this->closure)(...$parameters);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             throw new \RuntimeException(sprintf('Silenced call runner error: %s', $exception->getMessage()), 0, $exception);
         } finally {
-            $raised = static::restore();
+            $raised = self::restore();
         }
 
         return [$result, $raised ?? static::restore()];

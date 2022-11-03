@@ -16,30 +16,21 @@ use SR\Silencer\Call\Runner\ClosureRunner;
 
 final class CallDefinition
 {
-    /**
-     * @var \Closure|null
-     */
-    private $closure;
+    private ?\Closure $closure = null;
 
-    /**
-     * @var object|null
-     */
-    private $binding;
+    private ?object $binding = null;
 
-    /**
-     * @var ResultInspector
-     */
-    private $inspector;
+    private ResultInspector $inspector;
 
     /**
      * Constructor allows for setting main closure or validation closure.
      *
      * @param \Closure|null $invokable       Main invokable called in an error-silenced environment
      * @param \Closure|null $validator       Validation checker that determines return value validity
-     * @param object        $bindToInvokable Binding for main invokable closure call
-     * @param object        $bindToValidator Binding for result validation closure
+     * @param object|null   $bindToInvokable Binding for main invokable closure call
+     * @param object|null   $bindToValidator Binding for result validation closure
      */
-    public function __construct(\Closure $invokable = null, \Closure $validator = null, $bindToInvokable = null, $bindToValidator = null)
+    public function __construct(\Closure $invokable = null, \Closure $validator = null, object $bindToInvokable = null, object $bindToValidator = null)
     {
         $this->setInvokable($invokable, $bindToInvokable);
         $this->setValidator($validator, $bindToValidator);
@@ -55,14 +46,14 @@ final class CallDefinition
      */
     public static function create(\Closure $invokable = null, \Closure $validator = null): self
     {
-        return new static($invokable, $validator);
+        return new self($invokable, $validator);
     }
 
     /**
      * Assigns a \Closure instance that will be called in error silenced environment.
      *
-     * @param \Closure $closure A closure to call in silenced environment
-     * @param object   $binding Optional binding context to apply to closure when called
+     * @param \Closure|null $closure A closure to call in silenced environment
+     * @param object|null   $binding Optional binding context to apply to closure when called
      */
     public function setInvokable(\Closure $closure = null, $binding = null): self
     {
@@ -76,10 +67,10 @@ final class CallDefinition
      * Assigns a \Closure instance used to determine return value validity. It is passed the return value and the php
      * error array (or null if non exists) as its only parameters.
      *
-     * @param \Closure $validator An instance of \Closure called to determine validity of return value and/or raised error
-     * @param object   $binding   Optional binding context to apply to closure when called
+     * @param \Closure|null $validator An instance of \Closure called to determine validity of return value and/or raised error
+     * @param object|null   $binding   Optional binding context to apply to closure when called
      */
-    public function setValidator(\Closure $validator = null, $binding = null): self
+    public function setValidator(\Closure $validator = null, object $binding = null): self
     {
         $this->inspector = new ResultInspector($validator, $binding);
 

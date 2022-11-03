@@ -18,42 +18,30 @@ final class ResultInspector
     /**
      * @var \Closure
      */
-    private $validatorClosure;
+    private ?\Closure $validatorClosure = null;
 
     /**
      * @var object
      */
-    private $validatorBinding;
+    private ?object $validatorBinding = null;
 
-    /**
-     * @var mixed
-     */
-    private $return;
+    private mixed $return;
 
     /**
      * @var string[]|null
      */
-    private $raised;
+    private ?array $raised;
 
-    /**
-     * @var bool
-     */
-    private $called;
+    private bool $called;
 
-    /**
-     * @param object|null $validatorBinding
-     */
-    public function __construct(\Closure $validatorClosure = null, $validatorBinding = null)
+    public function __construct(\Closure $validatorClosure = null, object $validatorBinding = null)
     {
         $this->validatorClosure = $validatorClosure;
         $this->validatorBinding = $validatorBinding ?: $this->validatorBinding;
         $this->called = false;
     }
 
-    /**
-     * @param mixed $result
-     */
-    public function setReturn($result, array $raised = null): self
+    public function setReturn(mixed $result, array $raised = null): self
     {
         $this->return = $result;
         $this->raised = $raised;
@@ -72,18 +60,12 @@ final class ResultInspector
         return null !== $this->return;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getReturn()
+    public function getReturn(): mixed
     {
         return $this->return;
     }
 
-    /**
-     * @param mixed $comparison
-     */
-    public function isEqual($comparison): bool
+    public function isEqual(mixed $comparison): bool
     {
         return $this->return === $comparison;
     }
@@ -125,10 +107,7 @@ final class ResultInspector
         return null !== $this->raised;
     }
 
-    /**
-     * @return string|int|array|null
-     */
-    public function getError(string $index = null)
+    public function getError(string $index = null): mixed
     {
         if (null === $this->raised) {
             return null;
@@ -137,17 +116,11 @@ final class ResultInspector
         return null === $index ? $this->raised : $this->raised[$index];
     }
 
-    /**
-     * @return string
-     */
     public function getErrorMessage(): ?string
     {
         return $this->getError('message');
     }
 
-    /**
-     * @return int
-     */
     public function getErrorType(): ?int
     {
         return $this->getError('type');

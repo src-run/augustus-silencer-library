@@ -21,7 +21,7 @@ final class Silencer
     /**
      * @var int[]
      */
-    private static $reportingLevelHistory = [];
+    private static array $reportingLevelHistory = [];
 
     /**
      * Enter new silenced error reporting level with optionally custom level mask.
@@ -30,10 +30,10 @@ final class Silencer
      */
     public static function silence(int $mask = null): int
     {
-        static::unShiftLevelHistory(static::getErrorReporting());
+        self::unShiftLevelHistory(self::getErrorReporting());
 
-        return static::setErrorReporting(
-            static::getSilencedMask(static::priorLevelHistory(), $mask)
+        return self::setErrorReporting(
+            self::getSilencedMask(self::priorLevelHistory(), $mask)
         );
     }
 
@@ -44,11 +44,11 @@ final class Silencer
      */
     public static function silenceIfNot(int $mask = null): int
     {
-        if (!static::isSilenced()) {
-            static::silence($mask);
+        if (!self::isSilenced()) {
+            self::silence($mask);
         }
 
-        return static::getErrorReporting();
+        return self::getErrorReporting();
     }
 
     /**
@@ -56,11 +56,11 @@ final class Silencer
      */
     public static function restore(): int
     {
-        if (!static::hasPriorState()) {
-            return static::getErrorReporting();
+        if (!self::hasPriorState()) {
+            return self::getErrorReporting();
         }
 
-        return static::setErrorReporting(static::shiftLevelHistory());
+        return self::setErrorReporting(self::shiftLevelHistory());
     }
 
     /**
@@ -68,47 +68,44 @@ final class Silencer
      */
     public static function isSilenced(): bool
     {
-        if (!static::hasPriorState()) {
+        if (!self::hasPriorState()) {
             return false;
         }
 
-        return static::getSilencedMask(static::priorLevelHistory()) ===
-               static::getSilencedMask(static::getErrorReporting());
+        return self::getSilencedMask(self::priorLevelHistory()) ===
+               self::getSilencedMask(self::getErrorReporting());
     }
 
     /**
-     * Returns true if state is "restorable" (meaning a prior restore state exists).
+     * Returns true if state can be restored (meaning a prior restore state exists).
      */
     public static function hasPriorState(): bool
     {
-        return (bool) count(static::$reportingLevelHistory) > 0;
+        return (bool) count(self::$reportingLevelHistory) > 0;
     }
 
     private static function unShiftLevelHistory(int $level): int
     {
-        array_unshift(static::$reportingLevelHistory, $level);
+        array_unshift(self::$reportingLevelHistory, $level);
 
         return $level;
     }
 
     private static function shiftLevelHistory(): int
     {
-        return array_shift(static::$reportingLevelHistory);
+        return array_shift(self::$reportingLevelHistory);
     }
 
     private static function priorLevelHistory(): int
     {
-        return static::hasPriorState() ? static::$reportingLevelHistory[0] : static::getErrorReporting();
+        return self::hasPriorState() ? self::$reportingLevelHistory[0] : self::getErrorReporting();
     }
 
-    /**
-     * @param int|null $level
-     */
     private static function setErrorReporting(int $level): int
     {
         error_reporting($level);
 
-        return static::getErrorReporting();
+        return self::getErrorReporting();
     }
 
     private static function getErrorReporting(): int

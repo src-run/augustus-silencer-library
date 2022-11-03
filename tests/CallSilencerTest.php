@@ -150,7 +150,7 @@ class CallSilencerTest extends TestCase
 
     public function testDoesNothingOnUnsetClosure()
     {
-        $silencer = \SR\Silencer\CallSilencerFactory::create();
+        $silencer = CallSilencerFactory::create();
         $ret = $silencer->invoke();
 
         $this->assertFalse($ret->isCalled());
@@ -158,7 +158,7 @@ class CallSilencerTest extends TestCase
 
     public function testInnerClosureExceptionIsReThrown()
     {
-        $silencer = \SR\Silencer\CallSilencerFactory::create();
+        $silencer = CallSilencerFactory::create();
         $silencer->setInvokable(function () {
             throw new \Exception('Inner closure exception.');
         });
@@ -193,7 +193,7 @@ class CallSilencerTest extends TestCase
         $this->assertTrue(Silencer::isSilenced());
         $this->assertTrue(Silencer::hasPriorState());
 
-        $silencer = \SR\Silencer\CallSilencerFactory::create();
+        $silencer = CallSilencerFactory::create();
         $silencer->setInvokable(function () {
             return true;
         });

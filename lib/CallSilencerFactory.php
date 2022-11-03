@@ -21,7 +21,7 @@ final class CallSilencerFactory
      * @param object|null   $invokableBind Alternative bind scope to apply to the silenced closure
      * @param object|null   $validatorBind Alternative bind scope to apply to validation closure
      */
-    public static function create(\Closure $invokableInst = null, \Closure $validatorInst = null, $invokableBind = null, $validatorBind = null): CallDefinition
+    public static function create(\Closure $invokableInst = null, \Closure $validatorInst = null, object $invokableBind = null, object $validatorBind = null): CallDefinition
     {
         $definition = CallDefinition::create();
         $definition->setInvokable($invokableInst, $invokableBind);
